@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,25 +13,181 @@
         <a th:href="@{/transaction-history}">Transaction History</a>
     </nav>
 
-    <div>
-        <input type="text" name="search" id="search" placeholder="Search for stocks...">
+    <div style="position: relative; width: 300px; margin: 20px 0;">
+        <input type="text" id="search" placeholder="Search for stocks..." autocomplete="off" style="width: 100%;">
+        <ul id="search-results" style="position: absolute; top: 100%; left: 0; width: 100%; background: white; border: 1px solid #ccc; list-style: none; padding: 0; margin: 0; display: none; z-index: 1000;"></ul>
     </div>
 
     <div class="company-profile">
-        <h1>Symbol - Name</h1>
-        <p>Industry</p>
-        <p>Website URL</p>
-        <p>Description of the company</p>
-        <p>Stock price</p>
-        <button>Add to watchlist</button>
+        <h1 id="prof-title">Symbol - Name</h1>
+        <p id="prof-industry">Industry</p>
+        <p id="prof-url">Website URL</p>
+        <p id="prof-desc">Description of the company</p>
+        <p id="prof-price" style="font-weight: bold; font-size: 1.2em; color: green;">Stock price: --</p>
+        
+        <button id="watchlist-btn" onclick="handleWatchlistAction()">Add to watchlist</button>
     </div>
 
+    <hr>
+
     <div class="latest-news">
-        <div class="news">
-            <h2>News Title 1</h2>
-            <p>Brief description of news</p>
-            <a href="link_to_full_article_1">Read more</a>
+        <h3>Latest News & Sentiment</h3>
+        <div id="news-container">
+            <p>Search for a stock to see related news.</p>
         </div>
     </div>
+
+<script th:inline="javascript">
+    const API_KEY = 'V58XXMSS1AR1L8TK'; 
+    const searchInput = document.getElementById('search');
+    const resultsList = document.getElementById('search-results');
+    const watchlistBtn = document.getElementById('watchlist-btn');
+    
+    // Initialize watchlist from Backend Model
+    // Assuming watchlist is a List of objects with a .symbol property
+    // The /*[[...]]*/ syntax hides the Thymeleaf logic from the editor's syntax checker
+    let currentWatchlist = /*[[${watchlist}]]*/ []; 
+    currentWatchlist = currentWatchlist.map(s => s.toUpperCase());
+    let currentActiveSymbol = ""; 
+    let debounceTimer;
+
+    // --- 1. Search Logic ---
+    searchInput.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        const query = searchInput.value.trim();
+        if (query.length < 2) { resultsList.style.display = 'none'; return; }
+
+        debounceTimer = setTimeout(async () => {
+            try {
+                const res = await fetch(`https://www.alphavantage.co/query?function=SYMBOL_SEARCH&keywords=${query}&apikey=${API_KEY}`);
+                const data = await res.json();
+                renderSearchDropdown(data.bestMatches || []);
+            } catch (err) { console.error("Search Error:", err); }
+        }, 300);
+    });
+
+    function renderSearchDropdown(matches) {
+        resultsList.innerHTML = '';
+        if (!matches.length) { resultsList.style.display = 'none'; return; }
+        
+        matches.forEach(item => {
+            const li = document.createElement('li');
+            li.style.padding = '10px';
+            li.style.cursor = 'pointer';
+            li.style.borderBottom = '1px solid #eee';
+            li.textContent = `${item['1. symbol']} - ${item['2. name']}`;
+            li.onclick = () => {
+                const symbol = item['1. symbol'];
+                searchInput.value = symbol;
+                resultsList.style.display = 'none';
+                updateDashboard(symbol);
+            };
+            resultsList.appendChild(li);
+        });
+        resultsList.style.display = 'block';
+    }
+
+    // --- 2. Update Dashboard & Toggle Button ---
+    async function updateDashboard(symbol) {
+        currentActiveSymbol = symbol.toUpperCase();
+        document.getElementById('news-container').innerHTML = "Loading data...";
+        
+        // Update Button state immediately based on local list
+        refreshWatchlistButton();
+
+        try {
+            const [overviewRes, quoteRes, newsRes] = await Promise.all([
+                fetch(`https://www.alphavantage.co/query?function=OVERVIEW&symbol=${symbol}&apikey=${API_KEY}`),
+                fetch(`https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${API_KEY}`),
+                fetch(`https://www.alphavantage.co/query?function=NEWS_SENTIMENT&tickers=${symbol}&limit=5&apikey=${API_KEY}`)
+            ]);
+
+            const overview = await overviewRes.json();
+            const quote = await quoteRes.json();
+            const newsData = await newsRes.json();
+
+            const globalQuote = quote["Global Quote"];
+            const rawPrice = globalQuote ? globalQuote["05. price"] : null;
+            const displayPrice = rawPrice ? `$${parseFloat(rawPrice).toFixed(2)}` : "Price Unavailable";
+
+            document.getElementById('prof-title').innerText = `${overview.Symbol || symbol} - ${overview.Name || 'N/A'}`;
+            document.getElementById('prof-industry').innerText = `Industry: ${overview.Industry || 'N/A'}`;
+            document.getElementById('prof-url').innerText = `Website: ${overview.OfficialSite || 'N/A'}`;
+            document.getElementById('prof-desc').innerText = overview.Description || 'No description available.';
+            document.getElementById('prof-price').innerText = `Stock Price: ${displayPrice}`;
+
+            renderNews(newsData.feed || []);
+
+        } catch (err) {
+            console.error("Dashboard Error:", err);
+            document.getElementById('news-container').innerHTML = "Error loading data.";
+        }
+    }
+
+    // --- 3. Watchlist Management ---
+    function refreshWatchlistButton() {
+        if (currentWatchlist.includes(currentActiveSymbol)) {
+            watchlistBtn.innerText = "Remove from watchlist";
+            watchlistBtn.style.backgroundColor = "#ff4d4d"; // Red
+            watchlistBtn.style.color = "white";
+        } else {
+            watchlistBtn.innerText = "Add to watchlist";
+            watchlistBtn.style.backgroundColor = ""; // Default
+            watchlistBtn.style.color = "";
+        }
+    }
+
+    async function handleWatchlistAction() {
+        if (!currentActiveSymbol) return;
+
+        const isRemoving = currentWatchlist.includes(currentActiveSymbol);
+        const url = isRemoving ? `/api/watchlist/remove/${currentActiveSymbol}` : `/api/watchlist/add/${currentActiveSymbol}`;
+        const method = isRemoving ? 'DELETE' : 'POST';
+
+        try {
+            const response = await fetch(url, { method: method });
+            if (response.ok) {
+                if (isRemoving) {
+                    currentWatchlist = currentWatchlist.filter(s => s !== currentActiveSymbol);
+                } else {
+                    currentWatchlist.push(currentActiveSymbol);
+                }
+                refreshWatchlistButton();
+            } else {
+                alert("Failed to update watchlist.");
+            }
+        } catch (err) {
+            console.error("Watchlist Update Error:", err);
+        }
+    }
+
+    // --- 4. News Rendering & Utilities ---
+    function renderNews(feed) {
+        const container = document.getElementById('news-container');
+        container.innerHTML = '';
+        if (!feed.length) { container.innerHTML = '<p>No news found.</p>'; return; }
+
+        feed.forEach(article => {
+            const card = document.createElement('div');
+            card.style = 'border: 1px solid #ccc; padding: 10px; margin: 10px 0; border-radius: 8px;';
+            const t = article.time_published;
+            const formattedTime = `${t.substring(0,4)}-${t.substring(4,6)}-${t.substring(6,8)}`;
+
+            card.innerHTML = `
+                <h4 style="margin: 0;">${article.title}</h4>
+                <p style="font-size: 0.9em; color: #555;">${article.summary.substring(0, 100)}...</p>
+                <div style="font-size: 0.8em; color: #888;">
+                    <strong>Published:</strong> ${formattedTime} | <strong>Sentiment:</strong> ${article.overall_sentiment_label}
+                </div>
+                <a href="${article.url}" target="_blank" style="font-size: 0.8em; color: #007bff;">Read more</a>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    document.addEventListener('click', (e) => {
+        if (!searchInput.contains(e.target)) resultsList.style.display = 'none';
+    });
+</script>
 </body>
 </html>

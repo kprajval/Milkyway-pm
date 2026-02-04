@@ -5,14 +5,17 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.ModelAndView;
 
 import com.neueda.pm_milkyway.service.TransactionsService;
+import com.neueda.pm_milkyway.service.WatchlistService;
 
 @RestController
 public class MainController {
 
     private final TransactionsService transactionsService;
+    private final WatchlistService watchlistService;
 
-    public MainController(TransactionsService transactionsService) {
+    public MainController(TransactionsService transactionsService, WatchlistService watchlistService) {
         this.transactionsService = transactionsService;
+        this.watchlistService = watchlistService;
     }
 
     @GetMapping("/")
@@ -22,7 +25,9 @@ public class MainController {
 
     @GetMapping("/market-lookup")
     public ModelAndView getMarketLookup() {
-        return new ModelAndView("MarketLookup");
+        ModelAndView mav = new ModelAndView("MarketLookup");
+        mav.addObject("watchlist", watchlistService.getWatchlistItems());
+        return mav;
     }
     
     @GetMapping("/performance")

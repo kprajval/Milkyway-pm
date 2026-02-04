@@ -11,18 +11,8 @@ import jakarta.persistence.Table;
 public class WatchlistEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
-    
+    @GeneratedValue(strategy = GenerationType.IDENTITY)    
     private String stock;
-
-    public Integer getId() {
-        return id;
-    }
-
-    public void setId(Integer id) {
-        this.id = id;
-    }
 
     public String getStock() {
         return stock;
