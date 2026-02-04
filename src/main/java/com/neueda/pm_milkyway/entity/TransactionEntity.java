@@ -21,7 +21,6 @@ public class TransactionEntity {
     private String type;
     private BigDecimal transactionValue;
     private BigDecimal purseValue;
-
     private Boolean status;
 
     public Integer getId() { 

@@ -15,14 +15,28 @@
 
     <div class="transaction-history">
         <table>
-            <tr>
-                <th>Transaction ID</th>
-                <th>Date</th>
-                <th>Type</th>
-                <th>Transaction Value</th>
-                <th>Purse Value</th>
-                <th>Status</th>
-            </tr>
+            <thead>
+                <tr>
+                    <th>Transaction ID</th>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Value</th>
+                    <th>Purse</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="t : ${transactions}">
+                    <td th:text="${t.id}">1</td>
+                    <td th:text="${t.date}">2023-01-01</td>
+                    <td th:text="${t.type}">BUY</td>
+                    <td th:text="${t.transactionValue}">0.00</td>
+                    <td th:text="${t.purseValue}">0.00</td>
+                    <td th:text="${t.status ? 'Success' : 'Failed'}">Status</td>
+                </tr>
+            </tbody>
         </table>
+    </div>
+</div>
 </body>
 </html>
