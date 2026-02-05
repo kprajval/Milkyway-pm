@@ -47,7 +47,7 @@
         .sidebar a.active { background: rgba(34, 211, 238, 0.12); color: var(--accent); }
 
         .main { flex: 1; padding: 36px 40px; max-width: 1200px; margin: 0 auto; width: 100%; }
-
+        
         .page-title { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; color: var(--text); margin-bottom: 28px; }
 
         .search-container { position: relative; width: 100%; max-width: 500px; margin-bottom: 28px; }
@@ -59,7 +59,7 @@
         .search-container input::placeholder { color: var(--text-muted); }
         .search-container input:focus { border-color: var(--accent); }
         .search-icon { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 16px; }
-
+        
         #search-results {
             position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px;
             background: var(--surface-elevated); border: 1px solid var(--border);
@@ -81,7 +81,7 @@
         .company-profile h1 { margin: 0 0 12px 0; font-size: 28px; letter-spacing: -0.02em; color: var(--text); }
         .company-profile p { margin: 8px 0; font-size: 14px; color: var(--text-muted); line-height: 1.6; }
         #prof-price { font-weight: 700; font-size: 24px; color: var(--accent); margin: 16px 0; }
-
+        
         #watchlist-btn {
             background: var(--accent); color: var(--bg); border: none; padding: 12px 28px;
             border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 15px;
@@ -89,14 +89,14 @@
         }
         #watchlist-btn:hover { background: var(--accent-dim); }
         #watchlist-btn.remove { background: var(--red); }
-
+        
         .chart-wrapper {
             width: 100%; height: 400px; margin: 28px 0 0 0;
             background: var(--surface-elevated); padding: 20px; border-radius: 16px; border: 1px solid var(--border);
         }
 
         .section-title { font-size: 20px; font-weight: 700; margin: 32px 0 16px; display: flex; align-items: center; gap: 10px; color: var(--text); }
-
+        
         .latest-news { margin-top: 32px; }
         #news-container { display: grid; gap: 12px; }
         .news-card {
@@ -141,7 +141,7 @@
             <p id="prof-url">Website URL</p>
             <p id="prof-desc">Description of the company</p>
             <p id="prof-price">Stock price: --</p>
-
+            
             <button id="watchlist-btn" onclick="handleWatchlistAction()">Add to watchlist</button>
 
             <div class="chart-wrapper">
@@ -162,12 +162,12 @@
     const searchInput = document.getElementById('search');
     const resultsList = document.getElementById('search-results');
     const watchlistBtn = document.getElementById('watchlist-btn');
-
+    
     // Initialize watchlist from Backend Model
-    let currentWatchlist = /*[[${watchlist}]]*/ [];
+    let currentWatchlist = /*[[${watchlist}]]*/ []; 
     currentWatchlist = currentWatchlist.map(s => s.toUpperCase());
-
-    let currentActiveSymbol = "";
+    
+    let currentActiveSymbol = ""; 
     let debounceTimer;
     let myChart = null; // Store chart instance to destroy/recreate
 
@@ -175,9 +175,9 @@
     searchInput.addEventListener('input', () => {
         clearTimeout(debounceTimer);
         const query = searchInput.value.trim();
-        if (query.length < 2) {
-            resultsList.style.display = 'none';
-            return;
+        if (query.length < 2) { 
+            resultsList.style.display = 'none'; 
+            return; 
         }
 
         debounceTimer = setTimeout(async () => {
@@ -186,8 +186,8 @@
                 const res = await fetch(`${PROXY_URL}/search?q=${query}`);
                 const matches = await res.json();
                 renderSearchDropdown(matches);
-            } catch (err) {
-                console.error("Search Error:", err);
+            } catch (err) { 
+                console.error("Search Error:", err); 
             }
         }, 300);
     });
@@ -195,7 +195,7 @@
     function renderSearchDropdown(matches) {
         resultsList.innerHTML = '';
         if (!matches.length) { resultsList.style.display = 'none'; return; }
-
+        
         matches.forEach(item => {
             const li = document.createElement('li');
             li.style = 'padding: 10px; cursor: pointer; border-bottom: 1px solid #eee;';
@@ -214,7 +214,7 @@
     async function updateDashboard(symbol) {
         currentActiveSymbol = symbol.toUpperCase();
         document.getElementById('news-container').innerHTML = "Loading data...";
-
+        
         refreshWatchlistButton();
 
         try {
@@ -249,7 +249,7 @@
 
         } catch (err) {
             console.error("Dashboard Error:", err);
-            document.getElementById('news-container').innerHTML =
+            document.getElementById('news-container').innerHTML = 
                 `<p style="color: red;">Error loading data: ${err.message}</p>`;
         }
     }
@@ -257,7 +257,7 @@
     // --- 3. Chart.js Implementation ---
     function renderChart(data) {
         const ctx = document.getElementById('stockChart').getContext('2d');
-
+        
         // Destroy existing chart to prevent hover flickering
         if (myChart) { myChart.destroy(); }
 
@@ -290,7 +290,7 @@
     function refreshWatchlistButton() {
         const isAdded = currentWatchlist.includes(currentActiveSymbol);
         watchlistBtn.innerText = isAdded ? "Remove from watchlist" : "Add to watchlist";
-        watchlistBtn.style.backgroundColor = isAdded ? "#ff4d4d" : "";
+        watchlistBtn.style.backgroundColor = isAdded ? "#ff4d4d" : ""; 
         watchlistBtn.style.color = isAdded ? "white" : "";
     }
 
@@ -330,7 +330,7 @@
         newsItems.forEach(article => {
             const card = document.createElement('div');
             card.className = 'news-card';
-
+            
             // Handle date formatting - check different possible date fields
             let dateStr = 'Recent';
             if (article.time) {
@@ -351,10 +351,10 @@
                     <strong>${article.publisher || 'Finance News'}</strong> • ${dateStr}
                 </p>
                 <p>${article.summary || 'No summary available.'}</p>
-                ${article.url ?
+                ${article.url ? 
                     `<a href="${article.url}" target="_blank">
                         Read Full Article →
-                    </a>` :
+                    </a>` : 
                     '<span style="font-size: 0.85em; color: var(--text-muted);">No link available</span>'
                 }
             `;
@@ -365,6 +365,11 @@
     // Close search results when clicking outside
     document.addEventListener('click', (e) => {
         if (!searchInput.contains(e.target)) resultsList.style.display = 'none';
+    });
+
+    // Auto-load AAPL on page load
+    window.addEventListener('DOMContentLoaded', () => {
+        updateDashboard('AAPL');
     });
 </script>
 </body>
