@@ -78,6 +78,18 @@
             background: var(--surface); padding: 32px; border-radius: 20px; border: 1px solid var(--border);
             margin-bottom: 24px;
         }
+        .fundamentals-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: 18px;
+        }
+        .fund-item {
+            background: rgba(255,255,255,0.02); padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
+            font-size: 13px; color: var(--text); display: flex; flex-direction: column;
+        }
+        .fund-item .label { color: var(--text-muted); font-size: 11px; font-weight: 600; margin-bottom: 6px; }
+        .fund-item .value { font-weight: 700; color: var(--accent); }
         .company-profile h1 { margin: 0 0 12px 0; font-size: 28px; letter-spacing: -0.02em; color: var(--text); }
         .company-profile p { margin: 8px 0; font-size: 14px; color: var(--text-muted); line-height: 1.6; }
         #prof-price { font-weight: 700; font-size: 24px; color: var(--accent); margin: 16px 0; }
@@ -139,14 +151,18 @@
             <h1 id="prof-title">Symbol - Name</h1>
             <p id="prof-industry">Industry</p>
             <p id="prof-url">Website URL</p>
-            <p id="prof-desc">Description of the company</p>
             <p id="prof-price">Stock price: --</p>
+            <div id="fundamentals" class="fundamentals-grid" aria-live="polite">
+                <!-- fundamentals populated dynamically -->
+            </div>
             
             <button id="watchlist-btn" onclick="handleWatchlistAction()">Add to watchlist</button>
 
             <div class="chart-wrapper">
                 <canvas id="stockChart"></canvas>
             </div>
+
+            <p id="prof-desc">Description of the company</p>
         </div>
 
         <div class="latest-news">
@@ -219,10 +235,11 @@
 
         try {
             // Parallel fetch for Info, News, and History (Graph)
-            const [infoRes, newsRes, histRes] = await Promise.all([
+                const [infoRes, newsRes, histRes, fundRes] = await Promise.all([
                 fetch(`${PROXY_URL}/info/${symbol}`),
                 fetch(`${PROXY_URL}/news/${symbol}`),
                 fetch(`${PROXY_URL}/history/${symbol}`)
+                    , fetch(`${PROXY_URL}/fundamentals/${symbol}`)
             ]);
 
             // Check if responses are OK
@@ -233,6 +250,7 @@
             const info = await infoRes.json();
             const news = await newsRes.json();
             const history = await histRes.json();
+            const fundamentals = await fundRes.json();
 
             // Debug log to see what news data looks like
             console.log('News data received:', news);
@@ -243,7 +261,7 @@
             document.getElementById('prof-url').innerText = `Website: ${info.website}`;
             document.getElementById('prof-desc').innerText = info.description;
             document.getElementById('prof-price').innerText = `Stock Price: $${info.price.toFixed(2)}`;
-
+            renderFundamentals(fundamentals);
             renderNews(news);
             renderChart(history);
 
@@ -252,6 +270,46 @@
             document.getElementById('news-container').innerHTML = 
                 `<p style="color: red;">Error loading data: ${err.message}</p>`;
         }
+    }
+
+    // --- 6. Fundamentals Rendering ---
+    function formatNumber(n) {
+        if (n === null || n === undefined) return 'N/A';
+        if (typeof n === 'number') {
+            if (Math.abs(n) >= 1e12) return (n/1e12).toFixed(2) + 'T';
+            if (Math.abs(n) >= 1e9) return (n/1e9).toFixed(2) + 'B';
+            if (Math.abs(n) >= 1e6) return (n/1e6).toFixed(2) + 'M';
+            return n.toFixed(2);
+        }
+        return n;
+    }
+
+    function renderFundamentals(f) {
+        const container = document.getElementById('fundamentals');
+        container.innerHTML = '';
+
+        if (!f || f.error) {
+            container.innerHTML = '<div style="grid-column:1/-1;color:var(--text-muted);">Fundamentals unavailable.</div>';
+            return;
+        }
+
+        const items = [
+            { label: 'Market Cap', value: formatNumber(f.marketCap) },
+            { label: 'Trailing P/E', value: f.trailingPE ? f.trailingPE.toFixed(2) : 'N/A' },
+            { label: 'Forward P/E', value: f.forwardPE ? f.forwardPE.toFixed(2) : 'N/A' },
+            { label: 'EPS (TTM)', value: f.eps ? f.eps.toFixed(2) : 'N/A' },
+            { label: 'Dividend Yield', value: f.dividendYield ? (f.dividendYield * 100).toFixed(2) + '%' : 'N/A' },
+            { label: 'Beta', value: f.beta ? f.beta.toFixed(2) : 'N/A' },
+            { label: 'Revenue (TTM)', value: formatNumber(f.revenueTTM) },
+            { label: 'Profit Margins', value: f.profitMargins ? (f.profitMargins * 100).toFixed(2) + '%' : 'N/A' }
+        ];
+
+        items.forEach(it => {
+            const el = document.createElement('div');
+            el.className = 'fund-item';
+            el.innerHTML = `<div class="label">${it.label}</div><div class="value">${it.value}</div>`;
+            container.appendChild(el);
+        });
     }
 
     // --- 3. Chart.js Implementation ---
@@ -266,7 +324,7 @@
             data: {
                 labels: data.labels,
                 datasets: [{
-                    label: `${currentActiveSymbol} Price (7 Days)`,
+                    label: `${currentActiveSymbol} Price (30 Days)`,
                     data: data.prices,
                     borderColor: '#2ecc71',
                     backgroundColor: 'rgba(46, 204, 113, 0.1)',

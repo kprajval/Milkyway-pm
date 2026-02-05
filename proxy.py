@@ -89,6 +89,33 @@ def get_info(symbol):
         "price": info.get('currentPrice', info.get('regularMarketPrice', 0))
     })
 
+
+@app.route('/fundamentals/<symbol>')
+def get_fundamentals(symbol):
+    try:
+        stock = yf.Ticker(symbol)
+        info = stock.info
+
+        # Common fundamental metrics — handle missing values gracefully
+        fundamentals = {
+            "marketCap": info.get('marketCap'),
+            "trailingPE": info.get('trailingPE'),
+            "forwardPE": info.get('forwardPE'),
+            "eps": info.get('trailingEps') or info.get('epsTrailingTwelveMonths'),
+            "dividendYield": info.get('dividendYield'),
+            "beta": info.get('beta'),
+            "revenueTTM": info.get('totalRevenue') or info.get('revenueTrailing12Months'),
+            "profitMargins": info.get('profitMargins'),
+            "returnOnEquity": info.get('returnOnEquity'),
+            "currentRatio": info.get('currentRatio'),
+            "debtToEquity": info.get('debtToEquity')
+        }
+
+        # Clean keys and numeric normalization (if None left as None)
+        return jsonify(fundamentals)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/news/<symbol>')
 def get_news(symbol):
     stock = yf.Ticker(symbol)
