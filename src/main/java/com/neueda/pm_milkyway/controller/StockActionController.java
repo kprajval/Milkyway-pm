@@ -58,8 +58,14 @@ public class StockActionController {
         }
     }
 
-    @DeleteMapping("/watchlist/remove")
-    public ResponseEntity<Void> removeFromWatchlist(@RequestParam("symbol") String symbol) {
+    @PostMapping("/watchlist/add/{symbol}")
+    public ResponseEntity<Void> addToWatchlist(@org.springframework.web.bind.annotation.PathVariable String symbol) {
+        watchlistService.addToWatchList(symbol);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/watchlist/remove/{symbol}")
+    public ResponseEntity<Void> removeFromWatchlist(@org.springframework.web.bind.annotation.PathVariable String symbol) {
         watchlistService.removeFromWatchlist(symbol);
         return ResponseEntity.ok().build();
     }
