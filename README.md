@@ -34,7 +34,9 @@ Key features:
 
 ---
 
-## Repository structure
+
+
+### Key Components
 
 - `pom.xml` — Maven build file
 - `mvnw`, `mvnw.cmd` — Maven wrappers
