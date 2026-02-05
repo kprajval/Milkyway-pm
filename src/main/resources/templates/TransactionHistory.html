@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction History</title>
+</head>
+<body>
+    <nav>
+        <a th:href="@{/}">Dashboard</a>
+        <a th:href="@{/performance}">Performance</a>
+        <a th:href="@{/market-lookup}">Market Lookup</a>
+        <a th:href="@{/transaction-history}">Transaction History</a>
+    </nav>
+
+    <div class="transaction-history">
+        <table>
+            <thead>
+                <tr>
+                    <th>Transaction ID</th>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Value</th>
+                    <th>Purse</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="t : ${transactions}">
+                    <td th:text="${t.id}">1</td>
+                    <td th:text="${t.date}">2023-01-01</td>
+                    <td th:text="${t.type}">BUY</td>
+                    <td th:text="${t.transactionValue}">0.00</td>
+                    <td th:text="${t.purseValue}">0.00</td>
+                    <td th:text="${t.status ? 'Success' : 'Failed'}">Status</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>

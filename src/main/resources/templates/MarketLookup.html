@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Lookup</title>
+</head>
+<body>
+    <nav>
+        <a th:href="@{/}">Dashboard</a>
+        <a th:href="@{/performance}">Performance</a>
+        <a th:href="@{/market-lookup}">Market Lookup</a>
+        <a th:href="@{/transaction-history}">Transaction History</a>
+    </nav>
+
+    <div style="position: relative; width: 300px; margin: 20px 0;">
+        <input type="text" id="search" placeholder="Search for stocks..." autocomplete="off" style="width: 100%;">
+        <ul id="search-results" style="position: absolute; top: 100%; left: 0; width: 100%; background: white; border: 1px solid #ccc; list-style: none; padding: 0; margin: 0; display: none; z-index: 1000;"></ul>
+    </div>
+
+    <div class="company-profile">
+        <h1 id="prof-title">Symbol - Name</h1>
+        <p id="prof-industry">Industry</p>
+        <p id="prof-url">Website URL</p>
+        <p id="prof-desc">Description of the company</p>
+        <p id="prof-price" style="font-weight: bold; font-size: 1.2em; color: green;">Stock price: --</p>
+        
+        <button id="watchlist-btn" onclick="handleWatchlistAction()">Add to watchlist</button>
+
+        <div style="width: 100%; height: 400px; margin: 20px 0;">
+            <canvas id="stockChart"></canvas>
+        </div>
+    </div>
+
+    <hr>
+
+    <div class="latest-news">
+        <h3>Latest News & Sentiment</h3>
+        <div id="news-container">
+            <p>Search for a stock to see related news.</p>
+        </div>
+    </div>
+<script th:inline="javascript">
+    const PROXY_URL = 'http://localhost:3000'; // Your Python Flask Proxy
+    const searchInput = document.getElementById('search');
+    const resultsList = document.getElementById('search-results');
+    const watchlistBtn = document.getElementById('watchlist-btn');
+    
+    // Initialize watchlist from Backend Model
+    let currentWatchlist = /*[[${watchlist}]]*/ []; 
+    currentWatchlist = currentWatchlist.map(s => s.toUpperCase());
+    
+    let currentActiveSymbol = ""; 
+    let debounceTimer;
+    let myChart = null; // Store chart instance to destroy/recreate
+
+    // --- 1. Search Logic using Proxy ---
+    searchInput.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        const query = searchInput.value.trim();
+        if (query.length < 2) { 
+            resultsList.style.display = 'none'; 
+            return; 
+        }
+
+        debounceTimer = setTimeout(async () => {
+            try {
+                // Calls the @app.route('/search') in your proxy.py
+                const res = await fetch(`${PROXY_URL}/search?q=${query}`);
+                const matches = await res.json();
+                renderSearchDropdown(matches);
+            } catch (err) { 
+                console.error("Search Error:", err); 
+            }
+        }, 300);
+    });
+
+    function renderSearchDropdown(matches) {
+        resultsList.innerHTML = '';
+        if (!matches.length) { resultsList.style.display = 'none'; return; }
+        
+        matches.forEach(item => {
+            const li = document.createElement('li');
+            li.style = 'padding: 10px; cursor: pointer; border-bottom: 1px solid #eee;';
+            li.textContent = `${item.symbol} - ${item.name}`;
+            li.onclick = () => {
+                searchInput.value = item.symbol;
+                resultsList.style.display = 'none';
+                updateDashboard(item.symbol);
+            };
+            resultsList.appendChild(li);
+        });
+        resultsList.style.display = 'block';
+    }
+
+    // --- 2. Update Dashboard & Graph ---
+    async function updateDashboard(symbol) {
+        currentActiveSymbol = symbol.toUpperCase();
+        document.getElementById('news-container').innerHTML = "Loading data...";
+        
+        refreshWatchlistButton();
+
+        try {
+            // Parallel fetch for Info, News, and History (Graph)
+            const [infoRes, newsRes, histRes] = await Promise.all([
+                fetch(`${PROXY_URL}/info/${symbol}`),
+                fetch(`${PROXY_URL}/news/${symbol}`),
+                fetch(`${PROXY_URL}/history/${symbol}`)
+            ]);
+
+            // Check if responses are OK
+            if (!infoRes.ok) throw new Error(`Info fetch failed: ${infoRes.status}`);
+            if (!newsRes.ok) throw new Error(`News fetch failed: ${newsRes.status}`);
+            if (!histRes.ok) throw new Error(`History fetch failed: ${histRes.status}`);
+
+            const info = await infoRes.json();
+            const news = await newsRes.json();
+            const history = await histRes.json();
+
+            // Debug log to see what news data looks like
+            console.log('News data received:', news);
+
+            // Update Profile UI
+            document.getElementById('prof-title').innerText = `${info.symbol} - ${info.name}`;
+            document.getElementById('prof-industry').innerText = `Industry: ${info.industry}`;
+            document.getElementById('prof-url').innerText = `Website: ${info.website}`;
+            document.getElementById('prof-desc').innerText = info.description;
+            document.getElementById('prof-price').innerText = `Stock Price: $${info.price.toFixed(2)}`;
+
+            renderNews(news);
+            renderChart(history);
+
+        } catch (err) {
+            console.error("Dashboard Error:", err);
+            document.getElementById('news-container').innerHTML = 
+                `<p style="color: red;">Error loading data: ${err.message}</p>`;
+        }
+    }
+
+    // --- 3. Chart.js Implementation ---
+    function renderChart(data) {
+        const ctx = document.getElementById('stockChart').getContext('2d');
+        
+        // Destroy existing chart to prevent hover flickering
+        if (myChart) { myChart.destroy(); }
+
+        myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    label: `${currentActiveSymbol} Price (7 Days)`,
+                    data: data.prices,
+                    borderColor: '#2ecc71',
+                    backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 3,
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: false }
+                }
+            }
+        });
+    }
+
+    // --- 4. Watchlist Management ---
+    function refreshWatchlistButton() {
+        const isAdded = currentWatchlist.includes(currentActiveSymbol);
+        watchlistBtn.innerText = isAdded ? "Remove from watchlist" : "Add to watchlist";
+        watchlistBtn.style.backgroundColor = isAdded ? "#ff4d4d" : ""; 
+        watchlistBtn.style.color = isAdded ? "white" : "";
+    }
+
+    async function handleWatchlistAction() {
+        if (!currentActiveSymbol) return;
+
+        const isRemoving = currentWatchlist.includes(currentActiveSymbol);
+        const url = isRemoving ? `/api/watchlist/remove/${currentActiveSymbol}` : `/api/watchlist/add/${currentActiveSymbol}`;
+        const method = isRemoving ? 'DELETE' : 'POST';
+
+        try {
+            const response = await fetch(url, { method: method });
+            if (response.ok) {
+                if (isRemoving) {
+                    currentWatchlist = currentWatchlist.filter(s => s !== currentActiveSymbol);
+                } else {
+                    currentWatchlist.push(currentActiveSymbol);
+                }
+                refreshWatchlistButton();
+            }
+        } catch (err) {
+            console.error("Watchlist Update Error:", err);
+        }
+    }
+
+    // --- 5. News Rendering ---
+    // --- 5. News Rendering ---
+    function renderNews(newsItems) {
+        const container = document.getElementById('news-container');
+        container.innerHTML = '';
+
+        // If Python returns an empty list or error, show a message
+        if (!newsItems || newsItems.length === 0) {
+            container.innerHTML = '<p>No news available for this stock.</p>';
+            return;
+        }
+
+        newsItems.forEach(article => {
+            const card = document.createElement('div');
+            card.style = 'border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 8px; background: #fff;';
+            
+            // Handle date formatting - check different possible date fields
+            let dateStr = 'Recent';
+            if (article.time) {
+                try {
+                    const date = new Date(article.time);
+                    dateStr = date.toLocaleDateString(undefined, {
+                        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                    });
+                } catch (e) {
+                    console.warn("Date parsing error:", e);
+                }
+            }
+
+            // Build the HTML content safely
+            card.innerHTML = `
+                <h4 style="margin: 0 0 5px 0; color: #333;">${article.title || 'Untitled Article'}</h4>
+                <p style="font-size: 0.8em; color: #888; margin-bottom: 10px;">
+                    <strong>${article.publisher || 'Finance News'}</strong> • ${dateStr}
+                </p>
+                <p style="font-size: 0.9em; color: #444; line-height: 1.4;">${article.summary || 'No summary available.'}</p>
+                ${article.url ? 
+                    `<a href="${article.url}" target="_blank" style="font-size: 0.85em; color: #007bff; text-decoration: none; font-weight: bold;">
+                        Read Full Article →
+                    </a>` : 
+                    '<span style="font-size: 0.85em; color: #666;">No link available</span>'
+                }
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    // Close search results when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!searchInput.contains(e.target)) resultsList.style.display = 'none';
+    });
+</script>
+</body>
+</html>
