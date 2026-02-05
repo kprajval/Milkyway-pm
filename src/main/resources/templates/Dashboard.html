@@ -345,6 +345,12 @@
                 </div>
             </div>
 
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:18px;">
+                <input id="purse-amount" type="number" step="0.01" placeholder="Amount" style="padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);width:160px;">
+                <button onclick="addPurse()">Add Purse</button>
+                <button onclick="deductPurse()" style="background:#f87171;color:var(--bg);">Deduct Purse</button>
+            </div>
+
             <div class="dashboard-grid">
                 <div class="card">
                     <div class="card-title">Asset Allocation</div>
@@ -447,7 +453,7 @@
 
                         // Prepare Chart Data
                         labels.push(stockCode);
-                        marketValues.push(marketValue.toFixed(2));
+                        marketValues.push(marketValue);
                     }
                 } catch (e) { console.error("Error fetching", stockCode); }
             }
@@ -464,23 +470,69 @@
         const changeWrapper = document.getElementById('stat-change-wrapper');
         changeWrapper.className = totalPct >= 0 ? 'positive' : 'negative';
         const changePercent = document.getElementById('stat-change-percent');
-        changePercent.className = totalPct >= 0 ? 'positive' : 'negative';
+        if (changePercent) changePercent.className = totalPct >= 0 ? 'positive' : 'negative';
 
             // 4. Render Donut Chart
             renderDonutChart(labels, marketValues);
         }
 
+        async function addPurse() {
+            const el = document.getElementById('purse-amount');
+            const amt = parseFloat(el.value);
+            if (!amt || amt <= 0) { alert('Enter a positive amount'); return; }
+
+            try {
+                const res = await fetch(`/api/purse/add?amount=${encodeURIComponent(amt)}`, { method: 'POST' });
+                if (res.ok) {
+                    el.value = '';
+                    initDashboard();
+                    alert('Purse updated');
+                } else {
+                    const txt = await res.text();
+                    alert('Error: ' + txt);
+                }
+            } catch (e) { console.error(e); alert('Request failed'); }
+        }
+
+        async function deductPurse() {
+            const el = document.getElementById('purse-amount');
+            const amt = parseFloat(el.value);
+            if (!amt || amt <= 0) { alert('Enter a positive amount'); return; }
+
+            try {
+                const res = await fetch(`/api/purse/deduct?amount=${encodeURIComponent(amt)}`, { method: 'POST' });
+                if (res.ok) {
+                    el.value = '';
+                    initDashboard();
+                    alert('Purse updated');
+                } else {
+                    const txt = await res.text();
+                    alert('Error: ' + txt);
+                }
+            } catch (e) { console.error(e); alert('Request failed'); }
+        }
+
         function renderDonutChart(labels, data) {
             const ctx = document.getElementById('allocationChart').getContext('2d');
+            // destroy previous instance if present to avoid Chart.js errors
+            if (allocationChart) {
+                try { allocationChart.destroy(); } catch (e) { /* ignore */ }
+            }
+
+            // handle empty data sets gracefully
+            let chartLabels = labels && labels.length ? labels : ['No Holdings'];
+            let chartData = data && data.length ? data : [1];
+            let bgColors = [
+                '#22d3ee', '#34d399', '#f59e0b', '#f87171', '#a78bfa', '#fb923c'
+            ];
+
             allocationChart = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
-                    labels: labels,
+                    labels: chartLabels,
                     datasets: [{
-                        data: data,
-                        backgroundColor: [
-                            '#22d3ee', '#34d399', '#f59e0b', '#f87171', '#a78bfa', '#fb923c'
-                        ],
+                        data: chartData,
+                        backgroundColor: bgColors,
                         borderWidth: 0
                     }]
                 },

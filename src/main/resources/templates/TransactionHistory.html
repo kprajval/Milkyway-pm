@@ -164,13 +164,13 @@ function generatePDF() {
     title.style.cssText = 'color: black; font-size: 24px; margin-bottom: 20px; font-weight: bold;';
     container.appendChild(title);
     
-    // Style the table plainly
-    clone.style.cssText = 'width: 100%; border-collapse: collapse; color: black;';
-    
-    // Style all cells
+    // Style the table plainly and force fixed layout so columns are rendered
+    clone.style.cssText = 'width: 100%; border-collapse: collapse; color: black; table-layout: fixed;';
+
+    // Style all cells and prevent wrapping so columns keep consistent width
     const cells = clone.querySelectorAll('th, td');
     cells.forEach(cell => {
-        cell.style.cssText = 'border: 1px solid #333; padding: 10px 15px; text-align: left; color: black; background: white;';
+        cell.style.cssText = 'border: 1px solid #333; padding: 8px 10px; text-align: left; color: black; background: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;';
     });
     
     // Style headers
@@ -181,12 +181,13 @@ function generatePDF() {
     
     container.appendChild(clone);
     
+    // Use landscape orientation for wide tables so the last column isn't clipped
     const opt = {
-        margin: [15, 15, 15, 15],
+        margin: [10, 10, 10, 10],
         filename: 'StockView_Transaction_History.pdf',
         image: { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, backgroundColor: '#ffffff' },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
     };
     
     html2pdf().set(opt).from(container).save();

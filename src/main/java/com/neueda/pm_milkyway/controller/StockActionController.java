@@ -34,6 +34,26 @@ public class StockActionController {
         return transactionsService.getPurseValue();
     }
 
+    @PostMapping("/purse/add")
+    public ResponseEntity<String> addPurse(@RequestParam("amount") double amount) {
+        try {
+            transactionsService.addToPurse(amount);
+            return ResponseEntity.ok("Purse updated");
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/purse/deduct")
+    public ResponseEntity<String> deductPurse(@RequestParam("amount") double amount) {
+        try {
+            transactionsService.deductFromPurse(amount);
+            return ResponseEntity.ok("Purse updated");
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(e.getMessage());
+        }
+    }
+
     @PostMapping("/transactions/buy")
     public ResponseEntity<String> buyStock(@RequestParam("symbol") String symbol,
             @RequestParam("quantity") int quantity,

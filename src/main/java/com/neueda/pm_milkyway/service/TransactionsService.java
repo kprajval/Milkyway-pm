@@ -194,4 +194,35 @@ public class TransactionsService {
         stats.put("changePercent", percentageChange);
         return stats;
     }
+
+    @Transactional
+    public void addToPurse(double amount) {
+        if (amount <= 0) throw new RuntimeException("Amount must be positive");
+        double currentPurse = getPurseValue();
+        double newPurse = currentPurse + amount;
+
+        TransactionEntity tx = new TransactionEntity();
+        tx.setDate(LocalDate.now());
+        tx.setType("PURSE ADD");
+        tx.setTransactionValue(java.math.BigDecimal.valueOf(amount));
+        tx.setPurseValue(java.math.BigDecimal.valueOf(newPurse));
+        tx.setStatus(true);
+        transactionsRepo.save(tx);
+    }
+
+    @Transactional
+    public void deductFromPurse(double amount) {
+        if (amount <= 0) throw new RuntimeException("Amount must be positive");
+        double currentPurse = getPurseValue();
+        if (currentPurse < amount) throw new RuntimeException("Insufficient purse balance");
+        double newPurse = currentPurse - amount;
+
+        TransactionEntity tx = new TransactionEntity();
+        tx.setDate(LocalDate.now());
+        tx.setType("PURSE DEDUCT");
+        tx.setTransactionValue(java.math.BigDecimal.valueOf(amount));
+        tx.setPurseValue(java.math.BigDecimal.valueOf(newPurse));
+        tx.setStatus(true);
+        transactionsRepo.save(tx);
+    }
 }
