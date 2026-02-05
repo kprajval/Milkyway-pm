@@ -130,6 +130,19 @@
         .overview-item .value span { display: inline; }
         .overview-item .value.positive { color: var(--green); }
         .overview-item .value.negative { color: var(--red); }
+        
+        @keyframes glowGreen {
+            0%, 100% { color: var(--accent); }
+            50% { color: var(--green); text-shadow: 0 0 8px var(--green); }
+        }
+
+        @keyframes glowRed {
+            0%, 100% { color: var(--accent); }
+            50% { color: var(--red); text-shadow: 0 0 8px var(--red); }
+        }
+        
+        .glow-green { animation: glowGreen 2s ease-in-out; }
+        .glow-red { animation: glowRed 2s ease-in-out; }
     </style>
 </head>
 <body>
@@ -180,7 +193,7 @@
                         <td><span class="symbol-tag" th:text="${item.stock}">Stock</span></td>
                         <td class="qty" th:text="${item.quantity}">0</td>
                         <td class="current-price">Loading...</td>
-                        <td class="investment-value" th:text="'$' + ${item.total_invested}">$0.00</td> 
+                        <td class="investment-value" th:text="'$' + ${#numbers.formatDecimal(item.total_invested, 1, 2)}">$0.00</td> 
                         <td class="market-value">--</td>
                         <td class="profit-loss">--</td>
                         <td class="pct-change">--</td>
@@ -462,21 +475,23 @@
             const purseValue = await purseResp.json();
             document.getElementById('stat-purse').innerText = purseValue.toFixed(2);
             
-            // Wait for stock data to load, then calculate from rendered table
+            // Wait for updateStockData to complete, then calculate from rendered table
             setTimeout(() => {
                 const rows = document.querySelectorAll('.stock-row');
                 let totalPortfolioValue = 0;
                 let totalInvestment = 0;
                 
-                for (const row of rows) {
-                    const investVal = parseFloat(row.querySelector('.investment-value').innerText.replace('$', '')) || 0;
-                    const marketValText = row.querySelector('.market-value').innerText;
-                    if (marketValText && marketValText !== '--') {
-                        const marketVal = parseFloat(marketValText.replace('$', '')) || 0;
+                rows.forEach(row => {
+                    const investValText = row.querySelector('.investment-value')?.innerText;
+                    const marketValText = row.querySelector('.market-value')?.innerText;
+                    
+                    if (investValText && marketValText && marketValText !== '--') {
+                        const investVal = parseFloat(investValText.replace('$', '').replace(',', '')) || 0;
+                        const marketVal = parseFloat(marketValText.replace('$', '').replace(',', '')) || 0;
                         totalPortfolioValue += marketVal;
                         totalInvestment += investVal;
                     }
-                }
+                });
                 
                 const totalPL = totalPortfolioValue - totalInvestment;
                 const totalPct = totalInvestment !== 0 ? (totalPL / totalInvestment) * 100 : 0;
@@ -488,7 +503,7 @@
                 document.getElementById('stat-change').innerText = totalPct.toFixed(2);
                 const changeWrapper = document.getElementById('stat-change-wrapper');
                 changeWrapper.className = totalPct >= 0 ? 'value positive' : 'value negative';
-            }, 2000); // Wait for stock prices to load
+            }, 3000); // Increased to 3s to ensure all stock data has loaded
         } catch (e) {
             console.error('Error loading dashboard stats:', e);
         }

@@ -92,6 +92,19 @@
         .overview-item .value.positive { color: var(--green); }
         .overview-item .value.negative { color: var(--red); }
         
+        @keyframes glowGreen {
+            0%, 100% { color: var(--accent); }
+            50% { color: var(--green); text-shadow: 0 0 8px var(--green); }
+        }
+
+        @keyframes glowRed {
+            0%, 100% { color: var(--accent); }
+            50% { color: var(--red); text-shadow: 0 0 8px var(--red); }
+        }
+        
+        .glow-green { animation: glowGreen 2s ease-in-out; }
+        .glow-red { animation: glowRed 2s ease-in-out; }
+        
         @media print {
             body { background: white; color: black; }
             .sidebar, .btn-generate { display: none !important; }
