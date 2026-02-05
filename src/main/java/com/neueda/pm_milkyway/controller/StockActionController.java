@@ -22,9 +22,12 @@ import com.neueda.pm_milkyway.service.WatchlistService;
 @RequestMapping("/api")
 public class StockActionController {
 
-    @Autowired private WatchlistService watchlistService;
-    @Autowired private TransactionsService transactionsService;
-    @Autowired private HoldingsService holdingsService;
+    @Autowired
+    private WatchlistService watchlistService;
+    @Autowired
+    private TransactionsService transactionsService;
+    @Autowired
+    private HoldingsService holdingsService;
 
     @GetMapping("/purse-value")
     public Double getPurse() {
@@ -32,9 +35,9 @@ public class StockActionController {
     }
 
     @PostMapping("/transactions/buy")
-    public ResponseEntity<String> buyStock(@RequestParam String symbol, 
-                                         @RequestParam int quantity, 
-                                         @RequestParam double price) {
+    public ResponseEntity<String> buyStock(@RequestParam("symbol") String symbol,
+            @RequestParam("quantity") int quantity,
+            @RequestParam("price") double price) {
         try {
             transactionsService.executePurchase(symbol, quantity, price);
             return ResponseEntity.ok("Purchase successful");
@@ -44,15 +47,15 @@ public class StockActionController {
     }
 
     @DeleteMapping("/watchlist/remove")
-    public ResponseEntity<Void> removeFromWatchlist(@RequestParam String symbol) {
+    public ResponseEntity<Void> removeFromWatchlist(@RequestParam("symbol") String symbol) {
         watchlistService.removeFromWatchlist(symbol);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/holdings/adjust")
-    public ResponseEntity<String> adjustHoldings(@RequestParam String symbol, 
-                                                @RequestParam String action, 
-                                                @RequestParam double price) {
+    public ResponseEntity<String> adjustHoldings(@RequestParam("symbol") String symbol,
+            @RequestParam("action") String action,
+            @RequestParam("price") double price) {
         try {
             transactionsService.handleAdjustment(symbol, action, price);
             return ResponseEntity.ok("Success");
@@ -65,7 +68,7 @@ public class StockActionController {
     public ResponseEntity<Map<String, Object>> getDashboardData() {
         List<HoldingsEntity> holdings = holdingsService.getAllHoldings();
         double purseValue = transactionsService.getPurseValue(); // Get current balance from DB
-        
+
         Map<String, Object> response = new HashMap<>();
         response.put("holdings", holdings);
         response.put("purse", purseValue);

@@ -124,56 +124,123 @@ def extract_symbol(text):
             return clean_word
     return None
 
+# --- Tool Functions (Actual & Dummy for Schema) ---
+def get_stock_price(symbol: str):
+    """Get the current stock price for a given symbol."""
+    try:
+        stock = yf.Ticker(symbol)
+        info = stock.fast_info
+        return info.last_price if info.last_price else None
+    except:
+        return None
+
+def get_news_summary(symbol: str):
+    """Get top 3 news headlines for a stock."""
+    try:
+        stock = yf.Ticker(symbol)
+        news = stock.news[:3]
+        return [{"title": n['title'], "url": n['link']} for n in news]
+    except:
+        return []
+
+# Dummy functions to generate schema for client-side actions
+def buy_stock(symbol: str, quantity: int):
+    """Buy a specific quantity of a stock.
+    Args:
+        symbol: The stock ticker (e.g., AAPL).
+        quantity: The number of shares to buy.
+    """
+    return {"action": "buy", "symbol": symbol, "quantity": quantity}
+
+def sell_stock(symbol: str, quantity: int):
+    """Sell a specific quantity of a stock.
+    Args:
+        symbol: The stock ticker.
+        quantity: The number of shares to sell.
+    """
+    return {"action": "sell", "symbol": symbol, "quantity": quantity}
+
+def get_portfolio():
+    """Get the user's current portfolio holdings and balance."""
+    return {"action": "get_portfolio"}
+
+# List of tools
+my_tools = [buy_stock, sell_stock, get_news_summary, get_portfolio]
+
 @app.route('/chat', methods=['POST'])
 def chat_bot():
     data = request.json
     user_msg = data.get('message', '')
+    portfolio_context = data.get('context', {}) 
     
     if not user_msg:
         return jsonify({"response": "Please say something!"})
 
-    # Check for symbol in message to provide context
-    symbol = extract_symbol(user_msg)
-    context_data = ""
+    system_instruction = f"""
+    You are an intelligent Portfolio Manager Assistant.
+    Your capabilities:
+    1. Answer questions about stocks using your knowledge.
+    2. Use tools to 'Buy' or 'Sell' stocks when explicitly asked.
+    3. Use 'get_news_summary' to fetch latest news if asked.
+    4. Use 'get_portfolio' if the user asks "what do I own" or "show my stocks", unless context is provided.
     
-    if symbol:
-        try:
-            stock = yf.Ticker(symbol)
-            info = stock.fast_info
-            
-            # Basic Price Info
-            price = info.last_price if info.last_price else "N/A"
-            change = ((info.last_price - info.previous_close) / info.previous_close * 100) if (info.last_price and info.previous_close) else 0
-            
-            # Sentiment from our existing function
-            sentiment = get_sentiment(symbol)
-            
-            context_data = f"""
-            Real-time data for {symbol}:
-            Price: ${price}
-            Change: {change:.2f}%
-            Sentiment: {sentiment}
-            """
-        except Exception as e:
-            print(f"Error fetching context for {symbol}: {e}")
-
-    # Construct Prompt
-    prompt = f"""
-    You are a helpful financial assistant for a Portfolio Manager app.
-    User Question: "{user_msg}"
+    Current Portfolio Context: {portfolio_context}
     
-    {context_data}
-    
-    Answer the user's question. If they asked about a stock and we provided data, interpret it (e.g., is it bullish?).
-    If no data was provided or the symbol is invalid, answer generally. Keep it concise (under 50 words).
+    CRITICAL:
+    - If user asks to buy/sell, CALL THE TOOL.
+    - If user asks for news, CALL THE TOOL.
     """
 
     try:
-        model = genai.GenerativeModel('gemini-2.5-flash')
-        response = model.generate_content(prompt)
+        # Pass functions directly to tools
+        model = genai.GenerativeModel('gemini-2.5-flash', tools=my_tools)
+        chat = model.start_chat()
+        
+        response = chat.send_message(f"{system_instruction}\n\nUser: {user_msg}")
+        
+        part = response.parts[0]
+        
+        # Check for function call
+        if part.function_call:
+            fc = part.function_call
+            tool_name = fc.name
+            args = fc.args
+            
+            # Construct Client Action
+            if tool_name == "buy_stock":
+                return jsonify({
+                    "type": "action",
+                    "action": "buy",
+                    "data": {"symbol": args['symbol'].upper(), "quantity": int(args['quantity'])},
+                    "message": f"Processing purchase of {int(args['quantity'])} {args['symbol'].upper()}..."
+                })
+            elif tool_name == "sell_stock":
+                return jsonify({
+                    "type": "action",
+                    "action": "sell",
+                    "data": {"symbol": args['symbol'].upper(), "quantity": int(args['quantity'])},
+                    "message": f"Processing sale of {int(args['quantity'])} {args['symbol'].upper()}..."
+                })
+            elif tool_name == "get_portfolio":
+                return jsonify({
+                    "type": "action",
+                    "action": "get_portfolio",
+                    "data": {},
+                    "message": "Fetching your portfolio..."
+                })
+            elif tool_name == "get_news_summary":
+                # Execute locally
+                news_items = get_news_summary(args['symbol'])
+                news_prompt = f"Summarize these headlines for {args['symbol']}:\n{news_items}"
+                model_n = genai.GenerativeModel('gemini-2.5-flash')
+                final_res = model_n.generate_content(news_prompt)
+                return jsonify({"response": final_res.text})
+
         return jsonify({"response": response.text})
+
     except Exception as e:
-        return jsonify({"response": f"I'm having trouble connecting to my brain right now. (Error: {str(e)})"})
+        print(f"Gemini Error: {e}")
+        return jsonify({"response": f"Error: {str(e)}"})
 
 if __name__ == '__main__':
     app.run(port=3000)
