@@ -355,8 +355,15 @@
 
         const response = await fetch(url, { method: 'POST' });
         if (response.ok) {
-            alert("Purchase Successful!");
-            location.reload();
+            // Add red glow animation to purse (money going out)
+            const purseValue = document.querySelector('#stat-purse').parentElement;
+            purseValue.classList.remove('glow-green', 'glow-red');
+            void purseValue.offsetWidth;
+            purseValue.classList.add('glow-red');
+            setTimeout(() => purseValue.classList.remove('glow-red'), 2000);
+            
+            closeModal();
+            setTimeout(() => location.reload(), 500);
         } else {
             const msg = await response.text();
             alert("Error: " + msg);
@@ -386,7 +393,18 @@
         const response = await fetch(url, { method: 'POST' });
         
         if (response.ok) {
-            location.reload(); 
+            // Add glow animation to purse
+            const purseValue = document.querySelector('#stat-purse').parentElement;
+            purseValue.classList.remove('glow-green', 'glow-red');
+            void purseValue.offsetWidth;
+            if (action === 'PLUS') {
+                purseValue.classList.add('glow-red'); // Money going out
+            } else {
+                purseValue.classList.add('glow-green'); // Money coming in
+            }
+            setTimeout(() => purseValue.classList.remove('glow-green', 'glow-red'), 2000);
+            
+            setTimeout(() => location.reload(), 500); 
         } else {
             const msg = await response.text();
             alert(msg);
@@ -444,28 +462,33 @@
             const purseValue = await purseResp.json();
             document.getElementById('stat-purse').innerText = purseValue.toFixed(2);
             
-            // Calculate portfolio stats from holdings
-            const rows = document.querySelectorAll('.stock-row');
-            let totalPortfolioValue = 0;
-            let totalInvestment = 0;
-            
-            for (const row of rows) {
-                const investVal = parseFloat(row.querySelector('.investment-value').innerText.replace('$', '')) || 0;
-                const marketVal = parseFloat(row.querySelector('.market-value').innerText.replace('$', '')) || 0;
-                totalPortfolioValue += marketVal;
-                totalInvestment += investVal;
-            }
-            
-            const totalPL = totalPortfolioValue - totalInvestment;
-            const totalPct = totalInvestment !== 0 ? (totalPL / totalInvestment) * 100 : 0;
-            
-            document.getElementById('stat-portfolio').innerText = totalPortfolioValue.toFixed(2);
-            document.getElementById('stat-pl').innerText = `$${totalPL.toFixed(2)}`;
-            const plWrapper = document.getElementById('stat-pl-wrapper');
-            plWrapper.className = totalPL >= 0 ? 'value positive' : 'value negative';
-            document.getElementById('stat-change').innerText = totalPct.toFixed(2);
-            const changeWrapper = document.getElementById('stat-change-wrapper');
-            changeWrapper.className = totalPct >= 0 ? 'value positive' : 'value negative';
+            // Wait for stock data to load, then calculate from rendered table
+            setTimeout(() => {
+                const rows = document.querySelectorAll('.stock-row');
+                let totalPortfolioValue = 0;
+                let totalInvestment = 0;
+                
+                for (const row of rows) {
+                    const investVal = parseFloat(row.querySelector('.investment-value').innerText.replace('$', '')) || 0;
+                    const marketValText = row.querySelector('.market-value').innerText;
+                    if (marketValText && marketValText !== '--') {
+                        const marketVal = parseFloat(marketValText.replace('$', '')) || 0;
+                        totalPortfolioValue += marketVal;
+                        totalInvestment += investVal;
+                    }
+                }
+                
+                const totalPL = totalPortfolioValue - totalInvestment;
+                const totalPct = totalInvestment !== 0 ? (totalPL / totalInvestment) * 100 : 0;
+                
+                document.getElementById('stat-portfolio').innerText = totalPortfolioValue.toFixed(2);
+                document.getElementById('stat-pl').innerText = `$${totalPL.toFixed(2)}`;
+                const plWrapper = document.getElementById('stat-pl-wrapper');
+                plWrapper.className = totalPL >= 0 ? 'value positive' : 'value negative';
+                document.getElementById('stat-change').innerText = totalPct.toFixed(2);
+                const changeWrapper = document.getElementById('stat-change-wrapper');
+                changeWrapper.className = totalPct >= 0 ? 'value positive' : 'value negative';
+            }, 2000); // Wait for stock prices to load
         } catch (e) {
             console.error('Error loading dashboard stats:', e);
         }

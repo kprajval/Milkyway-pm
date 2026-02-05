@@ -26,15 +26,13 @@
         }
 
         @keyframes glowGreen {
-            0% { box-shadow: 0 0 0px rgba(52, 211, 153, 0); }
-            50% { box-shadow: 0 0 20px rgba(52, 211, 153, 0.8); }
-            100% { box-shadow: 0 0 0px rgba(52, 211, 153, 0); }
+            0%, 100% { color: var(--accent); }
+            50% { color: var(--green); text-shadow: 0 0 8px var(--green); }
         }
 
         @keyframes glowRed {
-            0% { box-shadow: 0 0 0px rgba(248, 113, 113, 0); }
-            50% { box-shadow: 0 0 20px rgba(248, 113, 113, 0.8); }
-            100% { box-shadow: 0 0 0px rgba(248, 113, 113, 0); }
+            0%, 100% { color: var(--accent); }
+            50% { color: var(--red); text-shadow: 0 0 8px var(--red); }
         }
 
         * {
@@ -664,6 +662,15 @@
                                 boxWidth: 12,
                                 padding: 10,
                                 font: { size: 11 }
+                            },
+                            onClick: (e, legendItem, legend) => {
+                                const index = legendItem.datasetIndex;
+                                const ci = legend.chart;
+                                const meta = ci.getDatasetMeta(index);
+                                
+                                // Toggle dataset visibility
+                                meta.hidden = meta.hidden === null ? !ci.data.datasets[index].hidden : null;
+                                ci.update();
                             }
                         },
                         tooltip: {
@@ -672,31 +679,6 @@
                                     return context.dataset.label + ': $' + context.parsed.y.toFixed(2);
                                 }
                             }
-                        }
-                    },
-                    onHover: (event, activeElements) => {
-                        if (activeElements.length > 0) {
-                            const activeIndex = activeElements[0].datasetIndex;
-                            // Dim all datasets except the hovered one
-                            cumulativeChart.data.datasets.forEach((dataset, index) => {
-                                if (index === activeIndex) {
-                                    dataset.borderWidth = 3;
-                                    dataset.borderColor = dataset.borderColor.replace('0.3', '1');
-                                } else {
-                                    dataset.borderWidth = 1;
-                                    const color = dataset.borderColor;
-                                    dataset.borderColor = color.includes('rgba') ? color : color + '80'; // Add transparency
-                                }
-                            });
-                            cumulativeChart.update('none');
-                        } else {
-                            // Reset all datasets to normal
-                            cumulativeChart.data.datasets.forEach((dataset, index) => {
-                                dataset.borderWidth = 2;
-                                const originalColors = ['#22d3ee', '#34d399', '#f59e0b', '#f87171', '#a78bfa', '#fb923c'];
-                                dataset.borderColor = originalColors[index % originalColors.length];
-                            });
-                            cumulativeChart.update('none');
                         }
                     }
                 }
