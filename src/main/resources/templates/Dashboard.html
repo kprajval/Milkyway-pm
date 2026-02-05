@@ -25,6 +25,16 @@
             --red: #f87171;
         }
 
+        @keyframes glowGreen {
+            0%, 100% { color: var(--accent); }
+            50% { color: var(--green); text-shadow: 0 0 8px var(--green); }
+        }
+
+        @keyframes glowRed {
+            0%, 100% { color: var(--accent); }
+            50% { color: var(--red); text-shadow: 0 0 8px var(--red); }
+        }
+
         * {
             box-sizing: border-box;
         }
@@ -113,16 +123,20 @@
 
         .portfolio-overview {
             display: flex;
-            gap: 40px;
+            gap: 20px;
+            justify-content: space-between;
             align-items: baseline;
             flex-wrap: wrap;
             margin-bottom: 28px;
         }
-        .overview-item > span:first-child { font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 4px; font-weight: 500; }
-        .overview-item .value { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; display: inline; }
+        .overview-item { flex: 1; min-width: 180px; }
+        .overview-item > span:first-child { font-size: 16px; color: var(--text-muted); display: block; margin-bottom: 6px; font-weight: 500; }
+        .overview-item .value { font-size: 42px; font-weight: 700; letter-spacing: -0.02em; display: inline; }
         .overview-item .value span { display: inline; }
         .overview-item .value.positive { color: var(--green); }
         .overview-item .value.negative { color: var(--red); }
+        .overview-item .value.glow-green { animation: glowGreen 2s ease-in-out; }
+        .overview-item .value.glow-red { animation: glowRed 2s ease-in-out; }
 
         .dashboard-grid {
             display: grid;
@@ -358,6 +372,12 @@
                         <canvas id="allocationChart"></canvas>
                     </div>
                 </div>
+                <div class="card">
+                    <div class="card-title">Cumulative Performance (30 Days)</div>
+                    <div class="chart-wrap">
+                        <canvas id="cumulativeChart"></canvas>
+                    </div>
+                </div>
             </div>
 
             <div class="card holdings-card">
@@ -406,6 +426,7 @@
     <script>
         let myChart = null;
         let allocationChart = null;
+        let cumulativeChart = null;
 
         Chart.defaults.color = '#8b92a3';
         Chart.defaults.borderColor = '#2a3142';
@@ -474,6 +495,9 @@
 
             // 4. Render Donut Chart
             renderDonutChart(labels, marketValues);
+            
+            // 5. Render Cumulative Performance Chart
+            await renderCumulativeChart(rows);
         }
 
         async function addPurse() {
@@ -485,8 +509,13 @@
                 const res = await fetch(`/api/purse/add?amount=${encodeURIComponent(amt)}`, { method: 'POST' });
                 if (res.ok) {
                     el.value = '';
+                    // Add green glow animation
+                    const purseValue = document.querySelector('#stat-purse').parentElement;
+                    purseValue.classList.remove('glow-green', 'glow-red');
+                    void purseValue.offsetWidth; // Force reflow
+                    purseValue.classList.add('glow-green');
+                    setTimeout(() => purseValue.classList.remove('glow-green'), 2000);
                     initDashboard();
-                    alert('Purse updated');
                 } else {
                     const txt = await res.text();
                     alert('Error: ' + txt);
@@ -503,8 +532,13 @@
                 const res = await fetch(`/api/purse/deduct?amount=${encodeURIComponent(amt)}`, { method: 'POST' });
                 if (res.ok) {
                     el.value = '';
+                    // Add red glow animation
+                    const purseValue = document.querySelector('#stat-purse').parentElement;
+                    purseValue.classList.remove('glow-green', 'glow-red');
+                    void purseValue.offsetWidth; // Force reflow
+                    purseValue.classList.add('glow-red');
+                    setTimeout(() => purseValue.classList.remove('glow-red'), 2000);
                     initDashboard();
-                    alert('Purse updated');
                 } else {
                     const txt = await res.text();
                     alert('Error: ' + txt);
@@ -541,6 +575,112 @@
                     maintainAspectRatio: false,
                     cutout: '68%',
                     plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        async function renderCumulativeChart(rows) {
+            const ctx = document.getElementById('cumulativeChart').getContext('2d');
+            
+            // Destroy previous chart instance
+            if (cumulativeChart) {
+                try { cumulativeChart.destroy(); } catch (e) { /* ignore */ }
+            }
+
+            // Fetch historical data for all stocks
+            const datasets = [];
+            const colors = ['#22d3ee', '#34d399', '#f59e0b', '#f87171', '#a78bfa', '#fb923c'];
+            let sharedLabels = null;
+
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                const stockCode = row.getAttribute('data-stock');
+                
+                try {
+                    const response = await fetch(`http://localhost:3000/history/${stockCode}`);
+                    const data = await response.json();
+                    
+                    if (data.labels && data.prices) {
+                        if (!sharedLabels) sharedLabels = data.labels;
+                        
+                        datasets.push({
+                            label: stockCode,
+                            data: data.prices,
+                            borderColor: colors[i % colors.length],
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            pointHoverRadius: 4,
+                            tension: 0.35,
+                            fill: false
+                        });
+                    }
+                } catch (e) {
+                    console.error(`Error fetching history for ${stockCode}:`, e);
+                }
+            }
+
+            // Handle case with no data
+            if (datasets.length === 0) {
+                sharedLabels = ['No Data'];
+                datasets.push({
+                    label: 'No Holdings',
+                    data: [0],
+                    borderColor: '#8b92a3',
+                    backgroundColor: 'transparent'
+                });
+            }
+
+            cumulativeChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: sharedLabels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'nearest',
+                        intersect: false,
+                        axis: 'x'
+                    },
+                    scales: {
+                        x: { 
+                            grid: { display: false },
+                            ticks: { maxTicksLimit: 8 }
+                        },
+                        y: { 
+                            grid: { color: 'rgba(42, 49, 66, 0.6)' },
+                            beginAtZero: false
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 10,
+                                font: { size: 11 }
+                            },
+                            onClick: (e, legendItem, legend) => {
+                                const index = legendItem.datasetIndex;
+                                const ci = legend.chart;
+                                const meta = ci.getDatasetMeta(index);
+                                
+                                // Toggle dataset visibility
+                                meta.hidden = meta.hidden === null ? !ci.data.datasets[index].hidden : null;
+                                ci.update();
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': $' + context.parsed.y.toFixed(2);
+                                }
+                            }
+                        }
+                    }
                 }
             });
         }

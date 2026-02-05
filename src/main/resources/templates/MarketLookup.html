@@ -125,6 +125,34 @@
         @media (max-width: 1024px) {
             .sidebar { display: none; }
         }
+        
+        .portfolio-overview {
+            display: flex;
+            gap: 20px;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            margin-bottom: 28px;
+        }
+        .overview-item { flex: 1; min-width: 180px; }
+        .overview-item > span:first-child { font-size: 16px; color: var(--text-muted); display: block; margin-bottom: 6px; font-weight: 500; }
+        .overview-item .value { font-size: 42px; font-weight: 700; letter-spacing: -0.02em; display: inline; }
+        .overview-item .value span { display: inline; }
+        .overview-item .value.positive { color: var(--green); }
+        .overview-item .value.negative { color: var(--red); }
+        
+        @keyframes glowGreen {
+            0%, 100% { color: var(--accent); }
+            50% { color: var(--green); text-shadow: 0 0 8px var(--green); }
+        }
+
+        @keyframes glowRed {
+            0%, 100% { color: var(--accent); }
+            50% { color: var(--red); text-shadow: 0 0 8px var(--red); }
+        }
+        
+        .glow-green { animation: glowGreen 2s ease-in-out; }
+        .glow-red { animation: glowRed 2s ease-in-out; }
     </style>
 </head>
 <body>
@@ -140,6 +168,25 @@
 
     <div class="main">
         <h1 class="page-title">Market Lookup</h1>
+        
+        <div class="portfolio-overview">
+            <div class="overview-item">
+                <span>Total Purse</span>
+                <span class="value" style="color: var(--accent);">$<span id="stat-purse">--</span></span>
+            </div>
+            <div class="overview-item">
+                <span>Portfolio Value</span>
+                <span class="value positive">$<span id="stat-portfolio">--</span></span>
+            </div>
+            <div class="overview-item">
+                <span>Profit/Loss</span>
+                <span class="value" id="stat-pl-wrapper"><span id="stat-pl">--</span></span>
+            </div>
+            <div class="overview-item">
+                <span>Total Return</span>
+                <span class="value" id="stat-change-wrapper"><span id="stat-change">--</span>%</span>
+            </div>
+        </div>
 
         <div class="search-container">
             <i class="fa fa-search search-icon"></i>
@@ -429,7 +476,47 @@
     // Auto-load AAPL on page load
     window.addEventListener('DOMContentLoaded', () => {
         updateDashboard('AAPL');
+        loadDashboardStats();
     });
+    
+    async function loadDashboardStats() {
+        try {
+            // Fetch Purse Value
+            const purseResp = await fetch('/api/purse-value');
+            const purseValue = await purseResp.json();
+            document.getElementById('stat-purse').innerText = purseValue.toFixed(2);
+            
+            // Fetch holdings data
+            const holdingsResp = await fetch('/api/dashboard/stats');
+            const stats = await holdingsResp.json();
+            
+            let totalPortfolioValue = 0;
+            let totalInvestment = 0;
+            
+            for (const holding of stats.holdings) {
+                const priceResp = await fetch(`http://localhost:3000/quote/${holding.stock}`);
+                const priceData = await priceResp.json();
+                if (priceData.price) {
+                    const marketValue = priceData.price * holding.quantity;
+                    totalPortfolioValue += marketValue;
+                    totalInvestment += holding.total_invested;
+                }
+            }
+            
+            const totalPL = totalPortfolioValue - totalInvestment;
+            const totalPct = totalInvestment !== 0 ? (totalPL / totalInvestment) * 100 : 0;
+            
+            document.getElementById('stat-portfolio').innerText = totalPortfolioValue.toFixed(2);
+            document.getElementById('stat-pl').innerText = `$${totalPL.toFixed(2)}`;
+            const plWrapper = document.getElementById('stat-pl-wrapper');
+            plWrapper.className = totalPL >= 0 ? 'value positive' : 'value negative';
+            document.getElementById('stat-change').innerText = totalPct.toFixed(2);
+            const changeWrapper = document.getElementById('stat-change-wrapper');
+            changeWrapper.className = totalPct >= 0 ? 'value positive' : 'value negative';
+        } catch (e) {
+            console.error('Error loading dashboard stats:', e);
+        }
+    }
 </script>
 </body>
 </html>

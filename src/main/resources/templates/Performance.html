@@ -80,18 +80,23 @@
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
-            z-index: 2000; justify-content: center; align-items: center;
+            z-index: 2000;
+        }
+        .modal.active {
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         .modal-content {
             background: var(--surface); padding: 32px; border-radius: 24px; width: 400px; max-width: 90%;
             border: 1px solid var(--border); text-align: center;
         }
-        .modal-content h3 { margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: var(--text); }
-        .modal-content p { margin: 8px 0; font-size: 14px; color: var(--text-muted); }
-        .modal-content b { color: var(--text); }
+        .modal-content h3 { margin: 0 0 20px 0; font-size: 24px; font-weight: 700; color: var(--text); }
+        .modal-content p { margin: 10px 0; font-size: 18px; color: var(--text-muted); }
+        .modal-content b { color: var(--text); font-size: 18px; }
         .modal-content hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
 
-        .modal-content label { display: block; font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin: 16px 0 8px; text-align: left; }
+        .modal-content label { display: block; font-size: 16px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin: 16px 0 8px; text-align: left; }
         .modal-content input {
             width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border);
             font-size: 16px; font-weight: 600; margin-bottom: 16px; outline: none;
@@ -110,6 +115,34 @@
         }
 
         @media (max-width: 1024px) { .sidebar { display: none; } }
+        
+        .portfolio-overview {
+            display: flex;
+            gap: 20px;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            margin-bottom: 28px;
+        }
+        .overview-item { flex: 1; min-width: 180px; }
+        .overview-item > span:first-child { font-size: 16px; color: var(--text-muted); display: block; margin-bottom: 6px; font-weight: 500; }
+        .overview-item .value { font-size: 42px; font-weight: 700; letter-spacing: -0.02em; display: inline; }
+        .overview-item .value span { display: inline; }
+        .overview-item .value.positive { color: var(--green); }
+        .overview-item .value.negative { color: var(--red); }
+        
+        @keyframes glowGreen {
+            0%, 100% { color: var(--accent); }
+            50% { color: var(--green); text-shadow: 0 0 8px var(--green); }
+        }
+
+        @keyframes glowRed {
+            0%, 100% { color: var(--accent); }
+            50% { color: var(--red); text-shadow: 0 0 8px var(--red); }
+        }
+        
+        .glow-green { animation: glowGreen 2s ease-in-out; }
+        .glow-red { animation: glowRed 2s ease-in-out; }
     </style>
 </head>
 <body>
@@ -125,6 +158,25 @@
 
     <div class="main">
         <h1 class="page-title">Performance</h1>
+        
+        <div class="portfolio-overview">
+            <div class="overview-item">
+                <span>Total Purse</span>
+                <span class="value" style="color: var(--accent);">$<span id="stat-purse">--</span></span>
+            </div>
+            <div class="overview-item">
+                <span>Portfolio Value</span>
+                <span class="value positive">$<span id="stat-portfolio">--</span></span>
+            </div>
+            <div class="overview-item">
+                <span>Profit/Loss</span>
+                <span class="value" id="stat-pl-wrapper"><span id="stat-pl">--</span></span>
+            </div>
+            <div class="overview-item">
+                <span>Total Return</span>
+                <span class="value" id="stat-change-wrapper"><span id="stat-change">--</span>%</span>
+            </div>
+        </div>
 
         <div class="performance-card">
             <h2 class="section-title"><i class="fa fa-briefcase"></i> Your Holdings</h2>
@@ -141,7 +193,7 @@
                         <td><span class="symbol-tag" th:text="${item.stock}">Stock</span></td>
                         <td class="qty" th:text="${item.quantity}">0</td>
                         <td class="current-price">Loading...</td>
-                        <td class="investment-value" th:text="'$' + ${item.total_invested}">$0.00</td> 
+                        <td class="investment-value" th:text="'$' + ${#numbers.formatDecimal(item.total_invested, 1, 2)}">$0.00</td> 
                         <td class="market-value">--</td>
                         <td class="profit-loss">--</td>
                         <td class="pct-change">--</td>
@@ -277,6 +329,7 @@
         }
     }
     document.addEventListener('DOMContentLoaded', updateStockData);
+    document.addEventListener('DOMContentLoaded', loadDashboardStats);
 
 
     let selectedSymbol = "";
@@ -299,7 +352,7 @@
             document.getElementById('modalSymbol').innerText = symbol;
             document.getElementById('modalPrice').innerText = selectedPrice.toFixed(2);
             document.getElementById('modalPurse').innerText = purseValue.toFixed(2);
-            document.getElementById('buyModal').style.display = 'block';
+            document.getElementById('buyModal').classList.add('active');
             updateTotal();
         }
     }
@@ -315,8 +368,15 @@
 
         const response = await fetch(url, { method: 'POST' });
         if (response.ok) {
-            alert("Purchase Successful!");
-            location.reload();
+            // Add red glow animation to purse (money going out)
+            const purseValue = document.querySelector('#stat-purse').parentElement;
+            purseValue.classList.remove('glow-green', 'glow-red');
+            void purseValue.offsetWidth;
+            purseValue.classList.add('glow-red');
+            setTimeout(() => purseValue.classList.remove('glow-red'), 2000);
+            
+            closeModal();
+            setTimeout(() => location.reload(), 500);
         } else {
             const msg = await response.text();
             alert("Error: " + msg);
@@ -331,7 +391,7 @@
     }
 
     function closeModal() {
-        document.getElementById('buyModal').style.display = 'none';
+        document.getElementById('buyModal').classList.remove('active');
     }
 
     let myChart = null; // Variable to store the chart instance
@@ -346,7 +406,18 @@
         const response = await fetch(url, { method: 'POST' });
         
         if (response.ok) {
-            location.reload(); 
+            // Add glow animation to purse
+            const purseValue = document.querySelector('#stat-purse').parentElement;
+            purseValue.classList.remove('glow-green', 'glow-red');
+            void purseValue.offsetWidth;
+            if (action === 'PLUS') {
+                purseValue.classList.add('glow-red'); // Money going out
+            } else {
+                purseValue.classList.add('glow-green'); // Money coming in
+            }
+            setTimeout(() => purseValue.classList.remove('glow-green', 'glow-red'), 2000);
+            
+            setTimeout(() => location.reload(), 500); 
         } else {
             const msg = await response.text();
             alert(msg);
@@ -354,7 +425,7 @@
     }
 
     async function showGraph(symbol) {
-        document.getElementById('graphModal').style.display = 'flex';
+        document.getElementById('graphModal').classList.add('active');
         document.getElementById('graphTitle').innerText = symbol + " - 30 Day History";
 
         const response = await fetch(`http://localhost:3000/history/${symbol}`);
@@ -394,7 +465,48 @@
     }
 
     function closeGraph() {
-        document.getElementById('graphModal').style.display = 'none';
+        document.getElementById('graphModal').classList.remove('active');
+    }
+    
+    async function loadDashboardStats() {
+        try {
+            // Fetch Purse Value
+            const purseResp = await fetch('/api/purse-value');
+            const purseValue = await purseResp.json();
+            document.getElementById('stat-purse').innerText = purseValue.toFixed(2);
+            
+            // Wait for updateStockData to complete, then calculate from rendered table
+            setTimeout(() => {
+                const rows = document.querySelectorAll('.stock-row');
+                let totalPortfolioValue = 0;
+                let totalInvestment = 0;
+                
+                rows.forEach(row => {
+                    const investValText = row.querySelector('.investment-value')?.innerText;
+                    const marketValText = row.querySelector('.market-value')?.innerText;
+                    
+                    if (investValText && marketValText && marketValText !== '--') {
+                        const investVal = parseFloat(investValText.replace('$', '').replace(',', '')) || 0;
+                        const marketVal = parseFloat(marketValText.replace('$', '').replace(',', '')) || 0;
+                        totalPortfolioValue += marketVal;
+                        totalInvestment += investVal;
+                    }
+                });
+                
+                const totalPL = totalPortfolioValue - totalInvestment;
+                const totalPct = totalInvestment !== 0 ? (totalPL / totalInvestment) * 100 : 0;
+                
+                document.getElementById('stat-portfolio').innerText = totalPortfolioValue.toFixed(2);
+                document.getElementById('stat-pl').innerText = `$${totalPL.toFixed(2)}`;
+                const plWrapper = document.getElementById('stat-pl-wrapper');
+                plWrapper.className = totalPL >= 0 ? 'value positive' : 'value negative';
+                document.getElementById('stat-change').innerText = totalPct.toFixed(2);
+                const changeWrapper = document.getElementById('stat-change-wrapper');
+                changeWrapper.className = totalPct >= 0 ? 'value positive' : 'value negative';
+            }, 3000); // Increased to 3s to ensure all stock data has loaded
+        } catch (e) {
+            console.error('Error loading dashboard stats:', e);
+        }
     }
     </script>
 </body>
