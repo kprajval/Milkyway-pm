@@ -270,4 +270,9 @@ def chat_bot():
         return jsonify({"response": f"Error: {str(e)}"})
 
 if __name__ == '__main__':
-    app.run(port=3000)
+    # Allow overriding port via PORT env var for flexible dev setups
+    try:
+        port = int(os.getenv('PORT', '3000'))
+    except:
+        port = 3000
+    app.run(port=port)
