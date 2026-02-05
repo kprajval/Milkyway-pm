@@ -87,8 +87,9 @@
             flex-wrap: wrap;
             margin-bottom: 28px;
         }
-        .overview-item span { font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 4px; font-weight: 500; }
-        .overview-item .value { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+        .overview-item > span:first-child { font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 4px; font-weight: 500; }
+        .overview-item .value { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; display: inline; }
+        .overview-item .value span { display: inline; }
         .overview-item .value.positive { color: var(--green); }
         .overview-item .value.negative { color: var(--red); }
 
@@ -172,11 +173,10 @@
             background: var(--surface);
             padding: 32px;
             border-radius: 24px;
-            width: 600px;
+            width: 700px;
+            max-height: 520px;
             border: 1px solid var(--border);
-            animation: modalSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        @keyframes modalSlideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .modal-content h3 { margin: 0 0 20px 0; font-size: 20px; font-weight: 700; color: var(--text); }
         .btn-cancel {
             background: #6c757d;
@@ -228,19 +228,19 @@
         <div class="portfolio-overview">
             <div class="overview-item">
                 <span>Total Purse</span>
-                <span class="value" style="color: var(--accent);">$<span id="stat-purse">--</span></span>
+                <div class="value"><span style="color: var(--accent);">$</span><span style="color: var(--accent);" id="stat-purse">--</span></div>
             </div>
             <div class="overview-item">
                 <span>Portfolio Value</span>
-                <span class="value positive">$<span id="stat-portfolio">--</span></span>
+                <div class="value"><span class="positive">$</span><span class="positive" id="stat-portfolio">--</span></div>
             </div>
             <div class="overview-item">
                 <span>Profit/Loss</span>
-                <span class="value" id="stat-pl-wrapper"><span id="stat-pl">--</span></span>
+                <div class="value" id="stat-pl-wrapper"><span id="stat-pl">--</span></div>
             </div>
             <div class="overview-item">
                 <span>Total Return</span>
-                <span class="value" id="stat-change-wrapper"><span id="stat-change">--</span>%</span>
+                <div class="value"><span id="stat-change-wrapper"><span id="stat-change">--</span><span id="stat-change-percent">%</span></span></div>
             </div>
         </div>
 
@@ -257,30 +257,30 @@
             <div class="card-title">Current Holdings</div>
             <table>
                 <thead>
-                <tr>
-                    <th>Stock</th>
-                    <th>Quantity</th>
-                    <th>Current Price</th>
-                    <th>Invested</th>
-                    <th>Market Value</th>
-                    <th>P/L</th>
-                    <th>Change %</th>
-                    <th>Actions</th>
-                </tr>
+                    <tr>
+                        <th>Stock</th>
+                        <th>Quantity</th>
+                        <th>Current Price</th>
+                        <th>Invested</th>
+                        <th>Market Value</th>
+                        <th>P/L</th>
+                        <th>Change %</th>
+                        <th>Actions</th>
+                    </tr>
                 </thead>
                 <tbody>
-                <tr th:each="item : ${holdings}" class="stock-row" th:data-stock="${item.stock}">
-                    <td><span class="symbol" th:text="${item.stock}">Stock</span></td>
-                    <td class="qty" th:text="${item.quantity}">0</td>
-                    <td class="current-price">Loading...</td>
-                    <td class="investment-value" th:text="'$' + ${item.total_invested}">$0.00</td>
-                    <td class="market-value">--</td>
-                    <td class="profit-loss">--</td>
-                    <td class="pct-change">--</td>
-                    <td>
-                        <button th:onclick="showGraph([[${item.stock}]])"><i class="fa fa-chart-area"></i> Graph</button>
-                    </td>
-                </tr>
+                    <tr th:each="item : ${holdings}" class="stock-row" th:data-stock="${item.stock}">
+                        <td><span class="symbol" th:text="${item.stock}">Stock</span></td>
+                        <td class="qty" th:text="${item.quantity}">0</td>
+                        <td class="current-price">Loading...</td>
+                        <td class="investment-value" th:text="'$' + ${item.total_invested}">$0.00</td>
+                        <td class="market-value">--</td>
+                        <td class="profit-loss">--</td>
+                        <td class="pct-change">--</td>
+                        <td>
+                            <button th:onclick="showGraph([[${item.stock}]])"><i class="fa fa-chart-area"></i> Graph</button>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -307,7 +307,7 @@
         const rows = document.querySelectorAll('.stock-row');
         let totalPortfolioValue = 0;
         let totalInvestment = 0;
-
+        
         const labels = [];
         const marketValues = [];
 
@@ -324,7 +324,7 @@
             try {
                 const response = await fetch(`http://localhost:3000/quote/${stockCode}`);
                 const data = await response.json();
-
+                
                 if (data.price) {
                     const qty = parseFloat(row.querySelector('.qty').innerText) || 0;
                     const investVal = parseFloat(row.querySelector('.investment-value').innerText.replace('$', '')) || 0;
@@ -353,12 +353,16 @@
         // 3. Update Summary Stats
         const totalPL = totalPortfolioValue - totalInvestment;
         const totalPct = totalInvestment !== 0 ? (totalPL / totalInvestment) * 100 : 0;
-
+        
         document.getElementById('stat-portfolio').innerText = totalPortfolioValue.toFixed(2);
         document.getElementById('stat-pl').innerText = `$${totalPL.toFixed(2)}`;
-        document.getElementById('stat-pl-wrapper').className = totalPL >= 0 ? 'value positive' : 'value negative';
+        const plWrapper = document.getElementById('stat-pl-wrapper');
+        plWrapper.className = totalPL >= 0 ? 'value positive' : 'value negative';
         document.getElementById('stat-change').innerText = totalPct.toFixed(2);
-        document.getElementById('stat-change-wrapper').className = totalPct >= 0 ? 'value positive' : 'value negative';
+        const changeWrapper = document.getElementById('stat-change-wrapper');
+        changeWrapper.className = totalPct >= 0 ? 'positive' : 'negative';
+        const changePercent = document.getElementById('stat-change-percent');
+        changePercent.className = totalPct >= 0 ? 'positive' : 'negative';
 
         // 4. Render Donut Chart
         renderDonutChart(labels, marketValues);
@@ -431,6 +435,6 @@
     };
 
     document.addEventListener('DOMContentLoaded', initDashboard);
-</script>
+    </script>
 </body>
 </html>
