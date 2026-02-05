@@ -47,9 +47,9 @@
         .sidebar a.active { background: rgba(34, 211, 238, 0.12); color: var(--accent); }
 
         .main { flex: 1; padding: 36px 40px; max-width: 1240px; margin: 0 auto; width: 100%; }
-
+        
         .page-title { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; color: var(--text); margin-bottom: 28px; }
-
+        
         .performance-card { background: var(--surface); border-radius: 20px; border: 1px solid var(--border); padding: 28px; overflow-x: auto; margin-bottom: 28px; }
         .section-title { font-size: 20px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; color: var(--text); }
 
@@ -85,9 +85,7 @@
         .modal-content {
             background: var(--surface); padding: 32px; border-radius: 24px; width: 400px; max-width: 90%;
             border: 1px solid var(--border); text-align: center;
-            animation: modalSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        @keyframes modalSlideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .modal-content h3 { margin: 0 0 16px 0; font-size: 20px; font-weight: 700; color: var(--text); }
         .modal-content p { margin: 8px 0; font-size: 14px; color: var(--text-muted); }
         .modal-content b { color: var(--text); }
@@ -100,14 +98,14 @@
             background: var(--surface-elevated); color: var(--text);
         }
 
-        .btn-confirm {
-            width: 100%; padding: 14px; border-radius: 12px; border: none;
+        .btn-confirm { 
+            width: 100%; padding: 14px; border-radius: 12px; border: none; 
             background: var(--accent); color: var(--bg); font-weight: 600; cursor: pointer; font-size: 15px;
             margin-bottom: 8px;
         }
         .btn-confirm:hover { background: var(--accent-dim); }
-        .btn-cancel {
-            width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border);
+        .btn-cancel { 
+            width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--border); 
             background: transparent; font-weight: 600; cursor: pointer; color: var(--text); font-size: 14px;
         }
 
@@ -132,38 +130,38 @@
             <h2 class="section-title"><i class="fa fa-briefcase"></i> Your Holdings</h2>
             <table>
                 <thead>
-                <tr>
-                    <th>Stock</th><th>Quantity</th><th>Current Price</th>
-                    <th>Investment Value</th><th>Market Value</th>
-                    <th>Profit/Loss</th><th>% Change</th><th>Actions</th>
-                </tr>
+                    <tr>
+                        <th>Stock</th><th>Quantity</th><th>Current Price</th>
+                        <th>Investment Value</th><th>Market Value</th>
+                        <th>Profit/Loss</th><th>% Change</th><th>Actions</th>
+                    </tr>
                 </thead>
                 <tbody>
-                <tr th:each="item : ${holdings}" class="stock-row" th:data-stock="${item.stock}">
-                    <td><span class="symbol-tag" th:text="${item.stock}">Stock</span></td>
-                    <td class="qty" th:text="${item.quantity}">0</td>
-                    <td class="current-price">Loading...</td>
-                    <td class="investment-value" th:text="'$' + ${item.total_invested}">$0.00</td>
-                    <td class="market-value">--</td>
-                    <td class="profit-loss">--</td>
-                    <td class="pct-change">--</td>
-                    <td style="white-space: nowrap;">
-                        <button class="action-btn btn-plus" th:onclick="adjustHolding([[${item.stock}]], 'PLUS')"><i class="fa fa-plus"></i></button>
-                        <button class="action-btn btn-minus" th:onclick="adjustHolding([[${item.stock}]], 'MINUS')"><i class="fa fa-minus"></i></button>
-                        <button class="action-btn btn-graph" th:onclick="showGraph([[${item.stock}]])"><i class="fa fa-chart-line"></i></button>
-                    </td>
-                </tr>
-                <tr th:if="${#lists.isEmpty(holdings)}">
-                    <td colspan="8" style="text-align: center; padding: 40px; color: var(--text-muted);">No holdings yet. Buy stocks from the watchlist below.</td>
-                </tr>
+                    <tr th:each="item : ${holdings}" class="stock-row" th:data-stock="${item.stock}">
+                        <td><span class="symbol-tag" th:text="${item.stock}">Stock</span></td>
+                        <td class="qty" th:text="${item.quantity}">0</td>
+                        <td class="current-price">Loading...</td>
+                        <td class="investment-value" th:text="'$' + ${item.total_invested}">$0.00</td> 
+                        <td class="market-value">--</td>
+                        <td class="profit-loss">--</td>
+                        <td class="pct-change">--</td>
+                        <td style="white-space: nowrap;">
+                            <button class="action-btn btn-plus" th:onclick="adjustHolding([[${item.stock}]], 'PLUS')"><i class="fa fa-plus"></i></button>
+                            <button class="action-btn btn-minus" th:onclick="adjustHolding([[${item.stock}]], 'MINUS')"><i class="fa fa-minus"></i></button>
+                            <button class="action-btn btn-graph" th:onclick="showGraph([[${item.stock}]])"><i class="fa fa-chart-line"></i></button>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(holdings)}">
+                        <td colspan="8" style="text-align: center; padding: 40px; color: var(--text-muted);">No holdings yet. Buy stocks from the watchlist below.</td>
+                    </tr>
                 </tbody>
             </table>
         </div>
 
         <div id="graphModal" class="modal">
-            <div class="modal-content" style="width: 600px; max-width: 90%;">
+            <div class="modal-content" style="width: 700px; max-width: 90%; max-height: 520px;">
                 <h3 id="graphTitle">Stock History</h3>
-                <canvas id="stockChart"></canvas>
+                <canvas id="stockChart" style="height: 300px;"></canvas>
                 <button class="btn-cancel" onclick="closeGraph()" style="margin-top: 20px;">Close</button>
             </div>
         </div>
@@ -186,212 +184,218 @@
             </div>
             <table>
                 <thead>
-                <tr>
-                    <th>Stock</th>
-                    <th>Current Price</th>
-                    <th>Day Low</th>
-                    <th>Day High</th>
-                    <th>Prev Close</th>
-                    <th>Change %</th>
-                    <th>Sentiment</th>
-                    <th>Actions</th>
-                </tr>
+                    <tr>
+                        <th>Stock</th>
+                        <th>Current Price</th>
+                        <th>Day Low</th>
+                        <th>Day High</th>
+                        <th>Prev Close</th>
+                        <th>Change %</th>
+                        <th>Actions</th>
+                    </tr>
                 </thead>
                 <tbody>
-                <tr th:each="watch : ${watchlist}" class="watch-row" th:data-stock="${watch}">
-                    <td><span class="symbol-tag" th:text="${watch}">AAPL</span></td>
-                    <td class="current-price">Loading...</td>
-                    <td class="low">--</td>
-                    <td class="high">--</td>
-                    <td class="prevclose">--</td>
-                    <td class="change-pct">--</td>
-                    <td>
-                        <span class="sentiment badge neutral">Neutral</span>
-                    </td>
-                    <td style="white-space: nowrap;">
-                        <button class="action-btn btn-buy" th:onclick="handleTransaction([[${watch}]], 'BUY')">Buy</button>
-                        <button class="action-btn btn-graph" th:onclick="showGraph([[${watch}]])"><i class="fa fa-chart-line"></i></button>
-                        <button class="action-btn btn-remove" th:onclick="removeWatchlist([[${watch}]])"><i class="fa fa-times"></i></button>
-                    </td>
-                </tr>
-                <tr th:if="${#lists.isEmpty(watchlist)}">
-                    <td colspan="8" style="text-align: center; padding: 40px; color: var(--text-muted);">No stocks in watchlist. Add stocks from Market Lookup.</td>
-                </tr>
+                    <tr th:each="watch : ${watchlist}" class="watch-row" th:data-stock="${watch}">
+                        <td><span class="symbol-tag" th:text="${watch}">AAPL</span></td>
+                        <td class="current-price">Loading...</td>
+                        <td class="low">--</td>
+                        <td class="high">--</td>
+                        <td class="prevclose">--</td>
+                        <td class="change-pct">--</td>
+                        <td style="white-space: nowrap;">
+                            <button class="action-btn btn-buy" th:onclick="handleTransaction([[${watch}]], 'BUY')">Buy</button>
+                            <button class="action-btn btn-graph" th:onclick="showGraph([[${watch}]])"><i class="fa fa-chart-line"></i></button>
+                            <button class="action-btn btn-remove" th:onclick="removeWatchlist([[${watch}]])"><i class="fa fa-times"></i></button>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(watchlist)}">
+                        <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-muted);">No stocks in watchlist. Add stocks from Market Lookup.</td>
+                    </tr>
                 </tbody>
             </table>
         </div>
     </div>
 </div>
 
-<script>
-    async function handleTransaction(symbol, type) {
-    // This calls your Spring Boot Controller
-    const response = await fetch(`/api/transactions/${type.toLowerCase()}?symbol=${symbol}`, {
-        method: 'POST'
-    });
-    if (response.ok) {
-        alert(`${symbol} ${type} successful!`);
-        location.reload(); // Refresh to show new quantities
-    }
-}
-
-async function removeWatchlist(symbol) {
-    const response = await fetch(`/api/watchlist/remove?symbol=${symbol}`, {
-        method: 'DELETE'
-    });
-    if (response.ok) {
-        alert(`${symbol} removed from watchlist.`);
-        location.reload();
-    }
-}
-
-// --- Original Python Proxy Fetcher ---
-async function updateStockData() {
-    const rows = document.querySelectorAll('[data-stock]');
-    for (const row of rows) {
-        const stockCode = row.getAttribute('data-stock');
-        try {
-            const response = await fetch(`http://localhost:3000/quote/${stockCode}`);
-            const data = await response.json();
-            if (data.price) {
-                row.querySelector('.current-price').innerText = `$${data.price.toFixed(2)}`;
-
-                if (row.classList.contains('stock-row')) {
-                    const qty = parseFloat(row.querySelector('.qty').innerText) || 0;
-                    const investVal = parseFloat(row.querySelector('.investment-value').innerText) || 0;
-                    const marketValue = data.price * qty;
-                    const profitLoss = marketValue - investVal;
-                    row.querySelector('.market-value').innerText = `$${marketValue.toFixed(2)}`;
-                    row.querySelector('.profit-loss').innerText = `$${profitLoss.toFixed(2)}`;
-                    row.querySelector('.pct-change').innerText = `${((profitLoss/investVal)*100).toFixed(2)}%`;
-                    row.querySelector('.profit-loss').style.color = profitLoss >= 0 ? 'green' : 'red';
-                }
-
-                if (row.classList.contains('watch-row')) {
-                    const sentCell = row.querySelector('.sentiment');
-                    sentCell.innerText = data.sentiment;
-                    sentCell.className = 'sentiment badge ' + data.sentiment.toLowerCase();
-                    row.querySelector('.high').innerText = `$${data.high.toFixed(2)}`;
-                    row.querySelector('.low').innerText = `$${data.low.toFixed(2)}`;
-                    row.querySelector('.prevclose').innerText = `$${data.prev_close.toFixed(2)}`;
-
-                    const changePctCell = row.querySelector('.change-pct');
-                    changePctCell.innerText = `${data.change_pct.toFixed(2)}%`;
-                    changePctCell.style.color = data.change_pct >= 0 ? 'var(--green)' : 'var(--red)';
-                    changePctCell.style.fontWeight = '600';
-                }
-            }
-        } catch (e) { console.error("Error fetching", stockCode); }
-        await new Promise(r => setTimeout(r, 500));
-    }
-}
-document.addEventListener('DOMContentLoaded', updateStockData);
-
-
-let selectedSymbol = "";
-let selectedPrice = 0;
-
-async function handleTransaction(symbol, type) {
-    if (type === 'BUY') {
-        selectedSymbol = symbol;
-
-        // 1. Get Live Price from Python Proxy
-        const priceResp = await fetch(`http://localhost:3000/quote/${symbol}`);
-        const priceData = await priceResp.json();
-        selectedPrice = priceData.price;
-
-        // 2. Get Purse Value from Spring Boot
-        const purseResp = await fetch('/api/purse-value');
-        const purseValue = await purseResp.json();
-
-        // 3. Populate and Show Modal
-        document.getElementById('modalSymbol').innerText = symbol;
-        document.getElementById('modalPrice').innerText = selectedPrice.toFixed(2);
-        document.getElementById('modalPurse').innerText = purseValue.toFixed(2);
-        document.getElementById('buyModal').style.display = 'block';
-        updateTotal();
-    }
-}
-
-function updateTotal() {
-    const qty = document.getElementById('buyQty').value;
-    document.getElementById('modalTotal').innerText = `$${(qty * selectedPrice).toFixed(2)}`;
-}
-
-async function confirmPurchase() {
-    const qty = document.getElementById('buyQty').value;
-    const url = `/api/transactions/buy?symbol=${selectedSymbol}&quantity=${qty}&price=${selectedPrice}`;
-
-    const response = await fetch(url, { method: 'POST' });
-    if (response.ok) {
-        alert("Purchase Successful!");
-        location.reload();
-    } else {
-        const msg = await response.text();
-        alert("Error: " + msg);
-    }
-}
-
-async function removeWatchlist(symbol) {
-    if(confirm(`Remove ${symbol} from watchlist?`)) {
-        const response = await fetch(`/api/watchlist/remove?symbol=${symbol}`, { method: 'DELETE' });
-        if (response.ok) location.reload();
-    }
-}
-
-function closeModal() {
-    document.getElementById('buyModal').style.display = 'none';
-}
-
-let myChart = null; // Variable to store the chart instance
-
-async function adjustHolding(symbol, action) {
-    // 1. Get current price from Python
-    const priceResp = await fetch(`http://localhost:3000/quote/${symbol}`);
-    const data = await priceResp.json();
-
-    // 2. Tell Java to update DB
-    const url = `/api/holdings/adjust?symbol=${symbol}&action=${action}&price=${data.price}`;
-    const response = await fetch(url, { method: 'POST' });
-
-    if (response.ok) {
-        location.reload();
-    } else {
-        const msg = await response.text();
-        alert(msg);
-    }
-}
-
-async function showGraph(symbol) {
-    document.getElementById('graphModal').style.display = 'block';
-    document.getElementById('graphTitle').innerText = symbol + " - 30 Day History";
-
-    const response = await fetch(`http://localhost:3000/history/${symbol}`);
-    const data = await response.json();
-
-    const ctx = document.getElementById('stockChart').getContext('2d');
-
-    // Destroy old chart if it exists to avoid overlap
-    if (myChart) { myChart.destroy(); }
-
-    myChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: data.labels,
-            datasets: [{
-                label: 'Price ($)',
-                data: data.prices,
-                borderColor: '#2ecc71',
-                tension: 0.1,
-                fill: false
-            }]
+    <script>
+        async function handleTransaction(symbol, type) {
+        // This calls your Spring Boot Controller
+        const response = await fetch(`/api/transactions/${type.toLowerCase()}?symbol=${symbol}`, {
+            method: 'POST'
+        });
+        if (response.ok) {
+            alert(`${symbol} ${type} successful!`);
+            location.reload(); // Refresh to show new quantities
         }
-    });
-}
+    }
 
-function closeGraph() {
-    document.getElementById('graphModal').style.display = 'none';
-}
-</script>
+    async function removeWatchlist(symbol) {
+        const response = await fetch(`/api/watchlist/remove?symbol=${symbol}`, {
+            method: 'DELETE'
+        });
+        if (response.ok) {
+            alert(`${symbol} removed from watchlist.`);
+            location.reload();
+        }
+    }
+
+    // --- Original Python Proxy Fetcher ---
+    async function updateStockData() {
+        const rows = document.querySelectorAll('[data-stock]');
+        for (const row of rows) {
+            const stockCode = row.getAttribute('data-stock');
+            try {
+                const response = await fetch(`http://localhost:3000/quote/${stockCode}`);
+                const data = await response.json();
+                if (data.price) {
+                    row.querySelector('.current-price').innerText = `$${data.price.toFixed(2)}`;
+                    
+                    if (row.classList.contains('stock-row')) {
+                        const qty = parseFloat(row.querySelector('.qty').innerText) || 0;
+                        const investVal = parseFloat(row.querySelector('.investment-value').innerText.replace('$', '')) || 0;
+                        const marketValue = data.price * qty;
+                        const profitLoss = marketValue - investVal;
+                        row.querySelector('.market-value').innerText = `$${marketValue.toFixed(2)}`;
+                        row.querySelector('.profit-loss').innerText = `$${profitLoss.toFixed(2)}`;
+                        row.querySelector('.pct-change').innerText = `${((profitLoss/investVal)*100).toFixed(2)}%`;
+                        row.querySelector('.profit-loss').style.color = profitLoss >= 0 ? 'green' : 'red';
+                    }
+
+                    if (row.classList.contains('watch-row')) {
+                        row.querySelector('.high').innerText = `$${data.high.toFixed(2)}`;
+                        row.querySelector('.low').innerText = `$${data.low.toFixed(2)}`;
+                        row.querySelector('.prevclose').innerText = `$${data.prev_close.toFixed(2)}`;
+                        
+                        const changePctCell = row.querySelector('.change-pct');
+                        changePctCell.innerText = `${data.change_pct.toFixed(2)}%`;
+                        changePctCell.style.color = data.change_pct >= 0 ? 'var(--green)' : 'var(--red)';
+                        changePctCell.style.fontWeight = '600';
+                    }
+                }
+            } catch (e) { console.error("Error fetching", stockCode); }
+            await new Promise(r => setTimeout(r, 500));
+        }
+    }
+    document.addEventListener('DOMContentLoaded', updateStockData);
+
+
+    let selectedSymbol = "";
+    let selectedPrice = 0;
+
+    async function handleTransaction(symbol, type) {
+        if (type === 'BUY') {
+            selectedSymbol = symbol;
+            
+            // 1. Get Live Price from Python Proxy
+            const priceResp = await fetch(`http://localhost:3000/quote/${symbol}`);
+            const priceData = await priceResp.json();
+            selectedPrice = priceData.price;
+
+            // 2. Get Purse Value from Spring Boot
+            const purseResp = await fetch('/api/purse-value');
+            const purseValue = await purseResp.json();
+
+            // 3. Populate and Show Modal
+            document.getElementById('modalSymbol').innerText = symbol;
+            document.getElementById('modalPrice').innerText = selectedPrice.toFixed(2);
+            document.getElementById('modalPurse').innerText = purseValue.toFixed(2);
+            document.getElementById('buyModal').style.display = 'block';
+            updateTotal();
+        }
+    }
+
+    function updateTotal() {
+        const qty = document.getElementById('buyQty').value;
+        document.getElementById('modalTotal').innerText = `$${(qty * selectedPrice).toFixed(2)}`;
+    }
+
+    async function confirmPurchase() {
+        const qty = document.getElementById('buyQty').value;
+        const url = `/api/transactions/buy?symbol=${selectedSymbol}&quantity=${qty}&price=${selectedPrice}`;
+
+        const response = await fetch(url, { method: 'POST' });
+        if (response.ok) {
+            alert("Purchase Successful!");
+            location.reload();
+        } else {
+            const msg = await response.text();
+            alert("Error: " + msg);
+        }
+    }
+
+    async function removeWatchlist(symbol) {
+        if(confirm(`Remove ${symbol} from watchlist?`)) {
+            const response = await fetch(`/api/watchlist/remove?symbol=${symbol}`, { method: 'DELETE' });
+            if (response.ok) location.reload();
+        }
+    }
+
+    function closeModal() {
+        document.getElementById('buyModal').style.display = 'none';
+    }
+
+    let myChart = null; // Variable to store the chart instance
+
+    async function adjustHolding(symbol, action) {
+        // 1. Get current price from Python
+        const priceResp = await fetch(`http://localhost:3000/quote/${symbol}`);
+        const data = await priceResp.json();
+        
+        // 2. Tell Java to update DB
+        const url = `/api/holdings/adjust?symbol=${symbol}&action=${action}&price=${data.price}`;
+        const response = await fetch(url, { method: 'POST' });
+        
+        if (response.ok) {
+            location.reload(); 
+        } else {
+            const msg = await response.text();
+            alert(msg);
+        }
+    }
+
+    async function showGraph(symbol) {
+        document.getElementById('graphModal').style.display = 'flex';
+        document.getElementById('graphTitle').innerText = symbol + " - 30 Day History";
+
+        const response = await fetch(`http://localhost:3000/history/${symbol}`);
+        const data = await response.json();
+
+        const ctx = document.getElementById('stockChart').getContext('2d');
+        
+        // Destroy old chart if it exists to avoid overlap
+        if (myChart) { myChart.destroy(); }
+
+        myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    label: 'Price ($)',
+                    data: data.prices,
+                    borderColor: '#22d3ee',
+                    backgroundColor: 'rgba(34, 211, 238, 0.08)',
+                    fill: true,
+                    tension: 0.35,
+                    pointRadius: 0,
+                    pointHoverRadius: 6,
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { grid: { color: 'rgba(42, 49, 66, 0.6)' } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
+
+    function closeGraph() {
+        document.getElementById('graphModal').style.display = 'none';
+    }
+    </script>
 </body>
 </html>

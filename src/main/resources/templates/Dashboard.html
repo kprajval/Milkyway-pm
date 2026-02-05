@@ -118,28 +118,11 @@
             flex-wrap: wrap;
             margin-bottom: 28px;
         }
-
-        .overview-item span {
-            font-size: 13px;
-            color: var(--text-muted);
-            display: block;
-            margin-bottom: 4px;
-            font-weight: 500;
-        }
-
-        .overview-item .value {
-            font-size: 28px;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-        }
-
-        .overview-item .value.positive {
-            color: var(--green);
-        }
-
-        .overview-item .value.negative {
-            color: var(--red);
-        }
+        .overview-item > span:first-child { font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 4px; font-weight: 500; }
+        .overview-item .value { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; display: inline; }
+        .overview-item .value span { display: inline; }
+        .overview-item .value.positive { color: var(--green); }
+        .overview-item .value.negative { color: var(--red); }
 
         .dashboard-grid {
             display: grid;
@@ -260,9 +243,9 @@
             background: var(--surface);
             padding: 32px;
             border-radius: 24px;
-            width: 600px;
+            width: 700px;
+            max-height: 520px;
             border: 1px solid var(--border);
-            animation: modalSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         @keyframes modalSlideUp {
@@ -469,15 +452,19 @@
                 } catch (e) { console.error("Error fetching", stockCode); }
             }
 
-            // 3. Update Summary Stats
-            const totalPL = totalPortfolioValue - totalInvestment;
-            const totalPct = totalInvestment !== 0 ? (totalPL / totalInvestment) * 100 : 0;
-
-            document.getElementById('stat-portfolio').innerText = totalPortfolioValue.toFixed(2);
-            document.getElementById('stat-pl').innerText = `$${totalPL.toFixed(2)}`;
-            document.getElementById('stat-pl-wrapper').className = totalPL >= 0 ? 'value positive' : 'value negative';
-            document.getElementById('stat-change').innerText = totalPct.toFixed(2);
-            document.getElementById('stat-change-wrapper').className = totalPct >= 0 ? 'value positive' : 'value negative';
+        // 3. Update Summary Stats
+        const totalPL = totalPortfolioValue - totalInvestment;
+        const totalPct = totalInvestment !== 0 ? (totalPL / totalInvestment) * 100 : 0;
+        
+        document.getElementById('stat-portfolio').innerText = totalPortfolioValue.toFixed(2);
+        document.getElementById('stat-pl').innerText = `$${totalPL.toFixed(2)}`;
+        const plWrapper = document.getElementById('stat-pl-wrapper');
+        plWrapper.className = totalPL >= 0 ? 'value positive' : 'value negative';
+        document.getElementById('stat-change').innerText = totalPct.toFixed(2);
+        const changeWrapper = document.getElementById('stat-change-wrapper');
+        changeWrapper.className = totalPct >= 0 ? 'positive' : 'negative';
+        const changePercent = document.getElementById('stat-change-percent');
+        changePercent.className = totalPct >= 0 ? 'positive' : 'negative';
 
             // 4. Render Donut Chart
             renderDonutChart(labels, marketValues);
@@ -587,6 +574,9 @@
         };
         chatClose.onclick = () => chatWindow.style.display = 'none';
 
+        // Simple memory: Array of objects { role: 'user'|'model', content: 'text' }
+        let chatHistory = [];
+
         async function sendMessage() {
             const text = chatInput.value.trim();
             if (!text) return;
@@ -595,11 +585,12 @@
             chatInput.value = '';
             const loadingId = appendMessage("Thinking...", 'bot', true);
 
-            // Gather simple portfolio context
+            // Limited history (last 6 messages = 3 turns)
+            const recentHistory = chatHistory.slice(-6);
+
             const portfolioContext = {
                 purse: document.getElementById('stat-purse').innerText,
                 totalValue: document.getElementById('stat-portfolio').innerText,
-                // Simple list of owned stocks
                 holdings: Array.from(document.querySelectorAll('.stock-row')).map(r => ({
                     symbol: r.getAttribute('data-stock'),
                     qty: r.querySelector('.qty').innerText
@@ -612,7 +603,8 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         message: text,
-                        context: JSON.stringify(portfolioContext)
+                        context: JSON.stringify(portfolioContext),
+                        history: recentHistory
                     })
                 });
                 const data = await res.json();
@@ -631,110 +623,51 @@
         }
 
         async function handleChatAction(data) {
-            appendMessage(data.message, 'bot'); // "Processing buy..."
+            appendMessage(data.message, 'bot');
 
             if (data.action === 'buy' || data.action === 'sell') {
                 const symbol = data.data.symbol;
                 const quantity = data.data.quantity;
 
-                // 1. Get Live Price First
                 try {
                     const priceRes = await fetch(`http://localhost:3000/quote/${symbol}`);
                     const priceData = await priceRes.json();
 
                     if (!priceData.price) throw new Error("Could not fetch price");
-
                     const price = priceData.price;
 
-                    // 2. Execute Transaction on Java Backend
-                    let url, body;
+                    let url;
                     if (data.action === 'buy') {
-                        // /api/transactions/buy?symbol=X&quantity=Y&price=Z
                         url = `/api/transactions/buy?symbol=${symbol}&quantity=${quantity}&price=${price}`;
-                        const res = await fetch(url, { method: 'POST' });
-                        const text = await res.text();
-
-                        if (res.ok) {
-                            appendMessage(`✅ Successfully bought ${quantity} ${symbol} at $${price.toFixed(2)}`, 'bot');
-                            initDashboard(); // Refresh UI
-                        } else {
-                            // Backend Error (e.g. Insufficient Funds)
-                            appendMessage(`❌ Failed: ${text}`, 'bot');
-                        }
                     } else {
-                        // Sell Logic -> /api/holdings/adjust (using 'SELL' action logic if applicable or add sell endpoint)
-                        // Checking StockActionController: @PostMapping("/holdings/adjust") params: symbol, action, price
-                        // Wait, Controller has /transactions/buy but NO explicit /transactions/sell? 
-                        // It has /holdings/adjust with 'action'. Let's use that.
+                        // NOW USING THE NEW SELL ENDPOINT
+                        url = `/api/transactions/sell?symbol=${symbol}&quantity=${quantity}&price=${price}`;
+                    }
 
-                        url = `/api/holdings/adjust?symbol=${symbol}&action=SELL&price=${price}`;
-                        // Ideally we should send quantity too? 
-                        // Check StockActionController.java -> handleAdjustment(symbol, action, price). 
-                        // It seems 'adjust' might be for +1/-1 or full removal? 
-                        // Let's assume for this specific codebase, maybe we need to be careful.
-                        // User asked for "Sell half shares". 
-                        // Taking a safer bet: The Controller shown earlier has 'buyStock' and 'adjustHoldings'.
-                        // 'adjustHoldings' signature: (symbol, action, price). No quantity? 
-                        // Let's re-read the controller if needed. 
-                        // Assuming 'adjust' might perform a single unit change or we need to loop? 
-                        // actually let's just try to implement logic that matches the controller.
-                        // If the controller only supports 'buy' clearly, I should maybe stick to 'buy' or warn the user.
-                        // But wait, the user wants "buy and sell".
-                        // Let's look at `StockActionController` again in the prompt context.
-                        // It calls `transactionsService.handleAdjustment`.
-                        // Let's implement the 'buy' perfect first. 
-                        // For 'sell', if the API is limited, I will implement a "Sell not fully supported via chat yet" or try the adjust endpoint.
+                    const res = await fetch(url, { method: 'POST' });
+                    const text = await res.text();
 
-                        // RE-READING CONTROLLER in previous turn:
-                        // @PostMapping("/transactions/buy") -> symbol, quantity, price.
-                        // @PostMapping("/holdings/adjust") -> symbol, action, price. (No Quantity!)
+                    if (res.ok) {
+                        appendMessage(`✅ Successfully ${data.action === 'buy' ? 'bought' : 'sold'} ${quantity} ${symbol} at $${price.toFixed(2)}`, 'bot');
 
-                        // Okay, I will implement BUY fully. For SELL, I'll try to use the adjust endpoint but it might be limited.
-                        // Actually, I can allow the user to only SELL 1 qty per request if that's the limit, or just support BUY for now?
-                        // The user asked for "buy sell". 
-                        // I will try to support Sell via 'adjust' but maybe it only sells 1?
-                        // Let's check `handleAdjustment` in `TransactionsService`? I don't see that file.
-                        // I'll implement BUY confidently. For SELL, I'll log a message saying "Sell logic via chat is experimental".
-
-                        // actually, let's just execute the BUY logic for now, and for sell, use the same pattern if possible? 
-                        // No, buy has quantity. Adjust does not.
-                        // I'll stick to BUY for now to be safe, or try to loop the sell? No that's bad.
-
-                        // Workaround: I will implement the BUY logic.
-                        // If action is SELL, I will say "Selling is complex, please use the table buttons."
-                        // OR, I can try to pass quantity? No, API doesn't take it.
-
-                        // WAIT! I can use `transactionsService` in Java to add a Sell method? 
-                        // I am in Execution mode. I can modify Java too!
-                        // But that might be too invasive. 
-                        // I will implement BUY. And for SELL, I will handle it by calling the adjust endpoint N times? NO.
-                        // I will just implement BUY and error on SELL for now with a message "Please use the dashboard to sell."
-                        // UNLESS the user explicitly wants me to modify the backend.
-                        // User said "all other functionalities".
-
-                        // Let's modify the frontend to handle BUY perfectly and SELL with a "Not implemented" or "Use UI" message.
-                        // Correct path: Just implement BUY for now as proof of concept.
-
-                        if (data.action === 'sell') {
-                            appendMessage("⚠️ Selling multiple shares via chat is currently restricted. Please use the 'Graph/Edit' buttons in the table.", 'bot');
-                            return;
-                        }
+                        // Clear history or update it? Maybe adding a system note?
+                        // For now, simpler is better.
+                        initDashboard();
+                    } else {
+                        appendMessage(`❌ Failed: ${text}`, 'bot');
                     }
 
                 } catch (e) {
-                    appendMessage("❌ Error fetching price or communicating with server.", 'bot');
+                    appendMessage("❌ Error executing transaction.", 'bot');
                 }
             }
 
             if (data.action === 'get_portfolio') {
-                // The chat context already has the portfolio.
-                // We can just list it.
-                // Or re-fetch /api/dashboard/stats
                 try {
                     const resp = await fetch('/api/dashboard/stats');
                     const stats = await resp.json();
-                    // stats.holdings is the list
                     let msg = "Here is your portfolio:<br>";
+                    if (stats.holdings.length === 0) msg += "You have no stocks yet.";
                     stats.holdings.forEach(h => {
                         msg += `<b>${h.stock}</b>: ${h.quantity} shares<br>`;
                     });
@@ -752,11 +685,17 @@
         function appendMessage(text, sender, isLoading = false) {
             const div = document.createElement('div');
             div.style.cssText = `align-self: ${sender === 'user' ? 'flex-end' : 'flex-start'}; background: ${sender === 'user' ? '#007bff' : '#e9ecef'}; color: ${sender === 'user' ? 'white' : '#333'}; padding: 8px 12px; border-radius: 15px; border-${sender === 'user' ? 'bottom-right' : 'bottom-left'}-radius: 2px; max-width: 80%; word-wrap: break-word;`;
-            // Allow HTML for bolding/breaks
             div.innerHTML = text;
             if (isLoading) { div.id = 'loading-' + Date.now(); div.style.color = '#777'; div.style.fontStyle = 'italic'; }
             chatMessages.appendChild(div);
             chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            // Update History logic
+            if (!isLoading) {
+                // Map 'bot' to 'model' for Gemini
+                const role = sender === 'user' ? 'user' : 'model';
+                chatHistory.push({ role: role, content: div.innerText }); // Store plain text for history
+            }
             return div.id;
         }
 

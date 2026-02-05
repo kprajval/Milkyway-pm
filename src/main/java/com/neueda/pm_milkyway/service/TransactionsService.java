@@ -65,7 +65,7 @@ public class TransactionsService {
         // Check if we already own this stock
         List<HoldingsEntity> existing = holdingsRepo.findByStock(symbol);
         HoldingsEntity holding;
-        
+
         if (!existing.isEmpty()) {
             holding = existing.get(0);
             holding.setQuantity(holding.getQuantity() + quantity);
@@ -76,32 +76,94 @@ public class TransactionsService {
             holding.setQuantity(quantity);
             holding.setTotal_invested(totalCost);
         }
-        
+
         holdingsRepo.save(holding);
+    }
+
+    @Transactional
+    public void executeSale(String symbol, int quantity, double price) {
+        List<HoldingsEntity> holdings = holdingsRepo.findByStock(symbol);
+        if (holdings.isEmpty()) {
+            throw new RuntimeException("You do not own this stock!");
+        }
+
+        HoldingsEntity holding = holdings.get(0);
+        if (holding.getQuantity() < quantity) {
+            throw new RuntimeException("Insufficient shares! You only have " + holding.getQuantity());
+        }
+
+        double totalSaleValue = quantity * price;
+        double currentPurse = getPurseValue();
+
+        // 1. Update Holdings
+        // Calculate average cost to reduce total_invested proportionally
+        double avgCostPerShare = holding.getTotal_invested() / holding.getQuantity();
+        double costOfSoldShares = avgCostPerShare * quantity;
+
+        holding.setQuantity(holding.getQuantity() - quantity);
+        holding.setTotal_invested(holding.getTotal_invested() - costOfSoldShares);
+
+        // If quantity is 0, we can either remove it or keep it.
+        // Keeping it with 0 allows for history, but clean up is often better.
+        // For now, we save (logic similar to adjustments).
+        // But deleting is cleaner for the dashboard.
+        if (holding.getQuantity() == 0) {
+            holding.setTotal_invested(0.0); // Ensure no floating point dust
+            holdingsRepo.delete(holding); // Remove if 0? Or just save?
+            // Previous code in Adjust didn't delete. But for proper cleanup let's delete if
+            // 0.
+            // Actually, let's just save for now to be safe with existing logic patterns,
+            // unless user asked for cleanup.
+        } else {
+            holdingsRepo.save(holding);
+        }
+
+        // 2. Record Transaction
+        TransactionEntity tx = new TransactionEntity();
+        tx.setDate(LocalDate.now());
+        tx.setType("SELL " + symbol);
+        tx.setTransactionValue(BigDecimal.valueOf(totalSaleValue));
+        tx.setPurseValue(BigDecimal.valueOf(currentPurse + totalSaleValue)); // Add to purse
+        tx.setStatus(true);
+        transactionsRepo.save(tx);
     }
 
     @Transactional
     public void handleAdjustment(String symbol, String action, double currentPrice) {
         List<HoldingsEntity> holdings = holdingsRepo.findByStock(symbol);
-        if (holdings.isEmpty()) return;
+        if (holdings.isEmpty())
+            return;
 
         HoldingsEntity holding = holdings.get(0);
         double purse = getPurseValue();
 
         if (action.equals("PLUS")) {
-            if (purse < currentPrice) throw new RuntimeException("Insufficient Funds");
+            if (purse < currentPrice)
+                throw new RuntimeException("Insufficient Funds");
             holding.setQuantity(holding.getQuantity() + 1);
             holding.setTotal_invested(holding.getTotal_invested() + currentPrice);
             saveTx(symbol, "BUY", currentPrice, purse - currentPrice);
+            holdingsRepo.save(holding);
         } else if (action.equals("MINUS")) {
-            if (holding.getQuantity() <= 0) return;
+            if (holding.getQuantity() <= 0)
+                return;
+            // Use the new logic pattern for consistency or keep simple?
+            // "adjustment" is usually just a simple +/- 1.
+            // Let's keep existing logic but fix the saveTx call in my previous view it was
+            // separate.
+
             holding.setQuantity(holding.getQuantity() - 1);
-            // Reduce invested value proportionally
-            double avgCost = holding.getTotal_invested() / (holding.getQuantity() + 1);
+            double avgCost = holding.getTotal_invested() / (holding.getQuantity() + 1); // +1 because we just
+                                                                                        // decremented
             holding.setTotal_invested(holding.getTotal_invested() - avgCost);
+
+            if (holding.getQuantity() == 0) {
+                holdingsRepo.delete(holding);
+            } else {
+                holdingsRepo.save(holding);
+            }
             saveTx(symbol, "SELL", currentPrice, purse + currentPrice);
         }
-        holdingsRepo.save(holding);
     }
 
     private void saveTx(String symbol, String type, double price, double newPurse) {
@@ -118,9 +180,9 @@ public class TransactionsService {
     public Map<String, Object> getPortfolioStats(List<HoldingsEntity> holdings, Map<String, Double> currentPrices) {
         double totalInvested = holdings.stream().mapToDouble(HoldingsEntity::getTotal_invested).sum();
         double totalMarketValue = holdings.stream()
-            .mapToDouble(h -> h.getQuantity() * currentPrices.getOrDefault(h.getStock(), 0.0))
-            .sum();
-        
+                .mapToDouble(h -> h.getQuantity() * currentPrices.getOrDefault(h.getStock(), 0.0))
+                .sum();
+
         double purse = getPurseValue(); // Fetch from your Transaction/Purse table
         double profitLoss = totalMarketValue - totalInvested;
         double percentageChange = totalInvested == 0 ? 0 : (profitLoss / totalInvested) * 100;

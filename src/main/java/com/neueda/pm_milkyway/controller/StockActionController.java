@@ -46,6 +46,18 @@ public class StockActionController {
         }
     }
 
+    @PostMapping("/transactions/sell")
+    public ResponseEntity<String> sellStock(@RequestParam("symbol") String symbol,
+            @RequestParam("quantity") int quantity,
+            @RequestParam("price") double price) {
+        try {
+            transactionsService.executeSale(symbol, quantity, price);
+            return ResponseEntity.ok("Sale successful");
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(e.getMessage());
+        }
+    }
+
     @DeleteMapping("/watchlist/remove")
     public ResponseEntity<Void> removeFromWatchlist(@RequestParam("symbol") String symbol) {
         watchlistService.removeFromWatchlist(symbol);
@@ -64,7 +76,7 @@ public class StockActionController {
         }
     }
 
-    @GetMapping("/api/dashboard/stats")
+    @GetMapping("/dashboard/stats")
     public ResponseEntity<Map<String, Object>> getDashboardData() {
         List<HoldingsEntity> holdings = holdingsService.getAllHoldings();
         double purseValue = transactionsService.getPurseValue(); // Get current balance from DB
