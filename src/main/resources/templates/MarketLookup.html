@@ -1,10 +1,13 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Market Lookup | StockView</title>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -20,10 +23,23 @@
             --green: #34d399;
             --red: #f87171;
         }
-        * { box-sizing: border-box; }
-        body { margin: 0; font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-        .container { display: flex; min-height: 100vh; }
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
 
         .sidebar {
             width: 260px;
@@ -37,95 +53,289 @@
             top: 0;
             height: 100vh;
         }
-        .sidebar-brand { font-size: 20px; font-weight: 700; padding: 0 14px 24px; color: var(--accent); display: flex; align-items: center; gap: 10px; letter-spacing: -0.02em; }
+
+        .sidebar-brand {
+            font-size: 20px;
+            font-weight: 700;
+            padding: 0 14px 24px;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: -0.02em;
+        }
+
         .sidebar a {
-            display: flex; align-items: center; gap: 12px; padding: 12px 14px;
-            color: var(--text-muted); text-decoration: none; border-radius: 12px;
-            font-size: 15px; font-weight: 500; transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 500;
+            transition: 0.2s;
         }
-        .sidebar a:hover { background: var(--surface-elevated); color: var(--text); }
-        .sidebar a.active { background: rgba(34, 211, 238, 0.12); color: var(--accent); }
 
-        .main { flex: 1; padding: 36px 40px; max-width: 1200px; margin: 0 auto; width: 100%; }
-        
-        .page-title { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; color: var(--text); margin-bottom: 28px; }
+        .sidebar a:hover {
+            background: var(--surface-elevated);
+            color: var(--text);
+        }
 
-        .search-container { position: relative; width: 100%; max-width: 500px; margin-bottom: 28px; }
+        .sidebar a.active {
+            background: rgba(34, 211, 238, 0.12);
+            color: var(--accent);
+        }
+
+        .main {
+            flex: 1;
+            padding: 36px 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text);
+            margin-bottom: 28px;
+        }
+
+        .search-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 28px;
+        }
+
         .search-container input {
-            padding: 14px 20px 14px 48px; border-radius: 12px; border: 1px solid var(--border);
-            width: 100%; outline: none; transition: 0.2s; background: var(--surface); color: var(--text);
-            font-size: 15px; font-family: inherit;
+            padding: 14px 20px 14px 48px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            width: 100%;
+            outline: none;
+            transition: 0.2s;
+            background: var(--surface);
+            color: var(--text);
+            font-size: 15px;
+            font-family: inherit;
         }
-        .search-container input::placeholder { color: var(--text-muted); }
-        .search-container input:focus { border-color: var(--accent); }
-        .search-icon { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 16px; }
-        
+
+        .search-container input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-container input:focus {
+            border-color: var(--accent);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 16px;
+        }
+
         #search-results {
-            position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px;
-            background: var(--surface-elevated); border: 1px solid var(--border);
-            list-style: none; padding: 0; margin: 0; z-index: 1000;
-            max-height: 280px; overflow-y: auto; border-radius: 12px; box-shadow: 0 12px 32px rgba(0,0,0,0.3);
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 4px;
+            background: var(--surface-elevated);
+            border: 1px solid var(--border);
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            z-index: 1000;
+            max-height: 280px;
+            overflow-y: auto;
+            border-radius: 12px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
             display: none;
         }
+
         #search-results li {
-            padding: 12px 16px; cursor: pointer; border-bottom: 1px solid var(--border);
-            color: var(--text); font-size: 14px;
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+            font-size: 14px;
         }
-        #search-results li:last-child { border-bottom: none; }
-        #search-results li:hover { background: var(--surface); }
+
+        #search-results li:last-child {
+            border-bottom: none;
+        }
+
+        #search-results li:hover {
+            background: var(--surface);
+        }
 
         .company-profile {
-            background: var(--surface); padding: 32px; border-radius: 20px; border: 1px solid var(--border);
+            background: var(--surface);
+            padding: 32px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
             margin-bottom: 24px;
         }
+
         .fundamentals-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 12px;
             margin-top: 18px;
         }
+
         .fund-item {
-            background: rgba(255,255,255,0.02); padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border);
-            font-size: 13px; color: var(--text); display: flex; flex-direction: column;
+            background: rgba(255, 255, 255, 0.02);
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            font-size: 13px;
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
         }
-        .fund-item .label { color: var(--text-muted); font-size: 11px; font-weight: 600; margin-bottom: 6px; }
-        .fund-item .value { font-weight: 700; color: var(--accent); }
-        .company-profile h1 { margin: 0 0 12px 0; font-size: 28px; letter-spacing: -0.02em; color: var(--text); }
-        .company-profile p { margin: 8px 0; font-size: 14px; color: var(--text-muted); line-height: 1.6; }
-        #prof-price { font-weight: 700; font-size: 24px; color: var(--accent); margin: 16px 0; }
-        
+
+        .fund-item .label {
+            color: var(--text-muted);
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .fund-item .value {
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .company-profile h1 {
+            margin: 0 0 12px 0;
+            font-size: 28px;
+            letter-spacing: -0.02em;
+            color: var(--text);
+        }
+
+        .company-profile p {
+            margin: 8px 0;
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        #prof-price {
+            font-weight: 700;
+            font-size: 24px;
+            color: var(--accent);
+            margin: 16px 0;
+        }
+
         #watchlist-btn {
-            background: var(--accent); color: var(--bg); border: none; padding: 12px 28px;
-            border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 15px;
+            background: var(--accent);
+            color: var(--bg);
+            border: none;
+            padding: 12px 28px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 15px;
             margin-top: 16px;
         }
-        #watchlist-btn:hover { background: var(--accent-dim); }
-        #watchlist-btn.remove { background: var(--red); }
-        
-        .chart-wrapper {
-            width: 100%; height: 400px; margin: 28px 0 0 0;
-            background: var(--surface-elevated); padding: 20px; border-radius: 16px; border: 1px solid var(--border);
+
+        #watchlist-btn:hover {
+            background: var(--accent-dim);
         }
 
-        .section-title { font-size: 20px; font-weight: 700; margin: 32px 0 16px; display: flex; align-items: center; gap: 10px; color: var(--text); }
-        
-        .latest-news { margin-top: 32px; }
-        #news-container { display: grid; gap: 12px; }
+        #watchlist-btn.remove {
+            background: var(--red);
+        }
+
+        .chart-wrapper {
+            width: 100%;
+            height: 400px;
+            margin: 28px 0 0 0;
+            background: var(--surface-elevated);
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 32px 0 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text);
+        }
+
+        .latest-news {
+            margin-top: 32px;
+        }
+
+        #news-container {
+            display: grid;
+            gap: 12px;
+        }
+
         .news-card {
-            background: var(--surface); padding: 24px; border-radius: 16px; border: 1px solid var(--border);
+            background: var(--surface);
+            padding: 24px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
             transition: 0.2s;
         }
-        .news-card:hover { border-color: var(--accent-dim); background: var(--surface-elevated); }
-        .news-card h4 { margin: 0 0 8px 0; font-size: 16px; font-weight: 600; color: var(--text); }
-        .news-card p { margin: 6px 0; font-size: 13px; color: var(--text-muted); line-height: 1.5; }
-        .news-card .news-meta { font-size: 12px; color: var(--accent); font-weight: 500; margin-top: 12px; }
-        .news-card a { color: var(--accent); text-decoration: none; font-weight: 600; font-size: 13px; }
-        .news-card a:hover { text-decoration: underline; }
+
+        .news-card:hover {
+            border-color: var(--accent-dim);
+            background: var(--surface-elevated);
+        }
+
+        .news-card h4 {
+            margin: 0 0 8px 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .news-card p {
+            margin: 6px 0;
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .news-card .news-meta {
+            font-size: 12px;
+            color: var(--accent);
+            font-weight: 500;
+            margin-top: 12px;
+        }
+
+        .news-card a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .news-card a:hover {
+            text-decoration: underline;
+        }
 
         @media (max-width: 1024px) {
-            .sidebar { display: none; }
+            .sidebar {
+                display: none;
+            }
         }
-        
+
         .portfolio-overview {
             display: flex;
             gap: 20px;
@@ -134,389 +344,448 @@
             flex-wrap: wrap;
             margin-bottom: 28px;
         }
-        .overview-item { flex: 1; min-width: 180px; }
-        .overview-item > span:first-child { font-size: 16px; color: var(--text-muted); display: block; margin-bottom: 6px; font-weight: 500; }
-        .overview-item .value { font-size: 42px; font-weight: 700; letter-spacing: -0.02em; display: inline; }
-        .overview-item .value span { display: inline; }
-        .overview-item .value.positive { color: var(--green); }
-        .overview-item .value.negative { color: var(--red); }
-        
+
+        .overview-item {
+            flex: 1;
+            min-width: 180px;
+        }
+
+        .overview-item>span:first-child {
+            font-size: 16px;
+            color: var(--text-muted);
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .overview-item .value {
+            font-size: 42px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            display: inline;
+        }
+
+        .overview-item .value span {
+            display: inline;
+        }
+
+        .overview-item .value.positive {
+            color: var(--green);
+        }
+
+        .overview-item .value.negative {
+            color: var(--red);
+        }
+
         @keyframes glowGreen {
-            0%, 100% { color: var(--accent); }
-            50% { color: var(--green); text-shadow: 0 0 8px var(--green); }
+
+            0%,
+            100% {
+                color: var(--accent);
+            }
+
+            50% {
+                color: var(--green);
+                text-shadow: 0 0 8px var(--green);
+            }
         }
 
         @keyframes glowRed {
-            0%, 100% { color: var(--accent); }
-            50% { color: var(--red); text-shadow: 0 0 8px var(--red); }
+
+            0%,
+            100% {
+                color: var(--accent);
+            }
+
+            50% {
+                color: var(--red);
+                text-shadow: 0 0 8px var(--red);
+            }
         }
-        
-        .glow-green { animation: glowGreen 2s ease-in-out; }
-        .glow-red { animation: glowRed 2s ease-in-out; }
+
+        .glow-green {
+            animation: glowGreen 2s ease-in-out;
+        }
+
+        .glow-red {
+            animation: glowRed 2s ease-in-out;
+        }
     </style>
 </head>
+
 <body>
 
-<div class="container">
-    <div class="sidebar">
-        <div class="sidebar-brand"><i class="fa fa-chart-line"></i> StockView</div>
-        <a th:href="@{/}"><i class="fa fa-wallet"></i> Dashboard</a>
-        <a th:href="@{/performance}"><i class="fa fa-chart-line"></i> Performance</a>
-        <a th:href="@{/market-lookup}" class="active"><i class="fa fa-search"></i> Market Lookup</a>
-        <a th:href="@{/transaction-history}"><i class="fa fa-receipt"></i> Transaction History</a>
+    <div class="container">
+        <div class="sidebar">
+            <div class="sidebar-brand"><i class="fa fa-chart-line"></i> StockView</div>
+            <a href="Dashboard.html"><i class="fa fa-wallet"></i> Dashboard</a>
+            <a href="Performance.html"><i class="fa fa-chart-line"></i> Performance</a>
+            <a href="MarketLookup.html" class="active"><i class="fa fa-search"></i> Market Lookup</a>
+            <a href="TransactionHistory.html"><i class="fa fa-receipt"></i> Transaction History</a>
+        </div>
+
+        <div class="main">
+            <h1 class="page-title">Market Lookup</h1>
+
+            <div class="portfolio-overview">
+                <div class="overview-item">
+                    <span>Total Purse</span>
+                    <span class="value" style="color: var(--accent);">$<span id="stat-purse">--</span></span>
+                </div>
+                <div class="overview-item">
+                    <span>Portfolio Value</span>
+                    <span class="value positive">$<span id="stat-portfolio">--</span></span>
+                </div>
+                <div class="overview-item">
+                    <span>Profit/Loss</span>
+                    <span class="value" id="stat-pl-wrapper"><span id="stat-pl">--</span></span>
+                </div>
+                <div class="overview-item">
+                    <span>Total Return</span>
+                    <span class="value" id="stat-change-wrapper"><span id="stat-change">--</span>%</span>
+                </div>
+            </div>
+
+            <div class="search-container">
+                <i class="fa fa-search search-icon"></i>
+                <input type="text" id="search" placeholder="Search for stocks..." autocomplete="off">
+                <ul id="search-results"></ul>
+            </div>
+
+            <div class="company-profile">
+                <h1 id="prof-title">Symbol - Name</h1>
+                <p id="prof-industry">Industry</p>
+                <p id="prof-url">Website URL</p>
+                <p id="prof-price">Stock price: --</p>
+                <div id="fundamentals" class="fundamentals-grid" aria-live="polite">
+                    <!-- fundamentals populated dynamically -->
+                </div>
+
+                <button id="watchlist-btn" onclick="handleWatchlistAction()">Add to watchlist</button>
+
+                <div class="chart-wrapper">
+                    <canvas id="stockChart"></canvas>
+                </div>
+
+                <h2 class="section-title"><i class="fa fa-info-circle"></i> Company Description</h2>
+                <p id="prof-desc">Description of the company</p>
+            </div>
+
+            <div class="latest-news">
+                <h2 class="section-title"><i class="fa fa-newspaper"></i> Latest News & Sentiment</h2>
+                <div id="news-container">
+                    <p style="color: var(--text-muted); padding: 20px; text-align: center;">Search for a stock to see
+                        related news.</p>
+                </div>
+            </div>
+        </div>
     </div>
+    <script>
+        const BACKEND_URL = 'http://localhost:8086/api';
+        const PROXY_URL = 'http://localhost:3000';
 
-    <div class="main">
-        <h1 class="page-title">Market Lookup</h1>
-        
-        <div class="portfolio-overview">
-            <div class="overview-item">
-                <span>Total Purse</span>
-                <span class="value" style="color: var(--accent);">$<span id="stat-purse">--</span></span>
-            </div>
-            <div class="overview-item">
-                <span>Portfolio Value</span>
-                <span class="value positive">$<span id="stat-portfolio">--</span></span>
-            </div>
-            <div class="overview-item">
-                <span>Profit/Loss</span>
-                <span class="value" id="stat-pl-wrapper"><span id="stat-pl">--</span></span>
-            </div>
-            <div class="overview-item">
-                <span>Total Return</span>
-                <span class="value" id="stat-change-wrapper"><span id="stat-change">--</span>%</span>
-            </div>
-        </div>
+        const searchInput = document.getElementById('search');
+        const resultsList = document.getElementById('search-results');
+        const watchlistBtn = document.getElementById('watchlist-btn');
 
-        <div class="search-container">
-            <i class="fa fa-search search-icon"></i>
-            <input type="text" id="search" placeholder="Search for stocks..." autocomplete="off">
-            <ul id="search-results"></ul>
-        </div>
+        let currentWatchlist = [];
+        let currentActiveSymbol = "";
+        let debounceTimer;
+        let myChart = null;
 
-        <div class="company-profile">
-            <h1 id="prof-title">Symbol - Name</h1>
-            <p id="prof-industry">Industry</p>
-            <p id="prof-url">Website URL</p>
-            <p id="prof-price">Stock price: --</p>
-            <div id="fundamentals" class="fundamentals-grid" aria-live="polite">
-                <!-- fundamentals populated dynamically -->
-            </div>
-            
-            <button id="watchlist-btn" onclick="handleWatchlistAction()">Add to watchlist</button>
-
-            <div class="chart-wrapper">
-                <canvas id="stockChart"></canvas>
-            </div>
-
-            <h2 class="section-title"><i class="fa fa-info-circle"></i> Company Description</h2>
-            <p id="prof-desc">Description of the company</p>
-        </div>
-
-        <div class="latest-news">
-            <h2 class="section-title"><i class="fa fa-newspaper"></i> Latest News & Sentiment</h2>
-            <div id="news-container">
-                <p style="color: var(--text-muted); padding: 20px; text-align: center;">Search for a stock to see related news.</p>
-            </div>
-        </div>
-    </div>
-</div>
-<script th:inline="javascript">
-    const PROXY_URL = 'http://localhost:3000'; // Your Python Flask Proxy
-    const searchInput = document.getElementById('search');
-    const resultsList = document.getElementById('search-results');
-    const watchlistBtn = document.getElementById('watchlist-btn');
-    
-    // Initialize watchlist from Backend Model
-    let currentWatchlist = /*[[${watchlist}]]*/ []; 
-    currentWatchlist = currentWatchlist.map(s => s.toUpperCase());
-    
-    let currentActiveSymbol = ""; 
-    let debounceTimer;
-    let myChart = null; // Store chart instance to destroy/recreate
-
-    // --- 1. Search Logic using Proxy ---
-    searchInput.addEventListener('input', () => {
-        clearTimeout(debounceTimer);
-        const query = searchInput.value.trim();
-        if (query.length < 2) { 
-            resultsList.style.display = 'none'; 
-            return; 
-        }
-
-        debounceTimer = setTimeout(async () => {
+        // --- 0. Initialize Watchlist ---
+        async function initWatchlist() {
             try {
-                // Calls the @app.route('/search') in your proxy.py
-                const res = await fetch(`${PROXY_URL}/search?q=${query}`);
-                const matches = await res.json();
-                renderSearchDropdown(matches);
-            } catch (err) { 
-                console.error("Search Error:", err); 
-            }
-        }, 300);
-    });
+                const res = await fetch(`${BACKEND_URL}/watchlist`);
+                const data = await res.json();
+                currentWatchlist = data.map(s => s.toUpperCase());
+            } catch (e) { console.error("Error fetching watchlist", e); }
+        }
 
-    function renderSearchDropdown(matches) {
-        resultsList.innerHTML = '';
-        if (!matches.length) { resultsList.style.display = 'none'; return; }
-        
-        matches.forEach(item => {
-            const li = document.createElement('li');
-            li.style = 'padding: 10px; cursor: pointer; border-bottom: 1px solid #eee;';
-            li.textContent = `${item.symbol} - ${item.name}`;
-            li.onclick = () => {
-                searchInput.value = item.symbol;
+        // --- 1. Search Logic using Proxy ---
+        searchInput.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            const query = searchInput.value.trim();
+            if (query.length < 2) {
                 resultsList.style.display = 'none';
-                updateDashboard(item.symbol);
-            };
-            resultsList.appendChild(li);
-        });
-        resultsList.style.display = 'block';
-    }
-
-    // --- 2. Update Dashboard & Graph ---
-    async function updateDashboard(symbol) {
-        currentActiveSymbol = symbol.toUpperCase();
-        document.getElementById('news-container').innerHTML = "Loading data...";
-        
-        refreshWatchlistButton();
-
-        try {
-            // Parallel fetch for Info, News, and History (Graph)
-                const [infoRes, newsRes, histRes, fundRes] = await Promise.all([
-                fetch(`${PROXY_URL}/info/${symbol}`),
-                fetch(`${PROXY_URL}/news/${symbol}`),
-                fetch(`${PROXY_URL}/history/${symbol}`)
-                    , fetch(`${PROXY_URL}/fundamentals/${symbol}`)
-            ]);
-
-            // Check if responses are OK
-            if (!infoRes.ok) throw new Error(`Info fetch failed: ${infoRes.status}`);
-            if (!newsRes.ok) throw new Error(`News fetch failed: ${newsRes.status}`);
-            if (!histRes.ok) throw new Error(`History fetch failed: ${histRes.status}`);
-
-            const info = await infoRes.json();
-            const news = await newsRes.json();
-            const history = await histRes.json();
-            const fundamentals = await fundRes.json();
-
-            // Debug log to see what news data looks like
-            console.log('News data received:', news);
-
-            // Update Profile UI
-            document.getElementById('prof-title').innerText = `${info.symbol} - ${info.name}`;
-            document.getElementById('prof-industry').innerText = `Industry: ${info.industry}`;
-            document.getElementById('prof-url').innerText = `Website: ${info.website}`;
-            document.getElementById('prof-desc').innerText = info.description;
-            document.getElementById('prof-price').innerText = `Stock Price: $${info.price.toFixed(2)}`;
-            renderFundamentals(fundamentals);
-            renderNews(news);
-            renderChart(history);
-
-        } catch (err) {
-            console.error("Dashboard Error:", err);
-            document.getElementById('news-container').innerHTML = 
-                `<p style="color: red;">Error loading data: ${err.message}</p>`;
-        }
-    }
-
-    // --- 6. Fundamentals Rendering ---
-    function formatNumber(n) {
-        if (n === null || n === undefined) return 'N/A';
-        if (typeof n === 'number') {
-            if (Math.abs(n) >= 1e12) return (n/1e12).toFixed(2) + 'T';
-            if (Math.abs(n) >= 1e9) return (n/1e9).toFixed(2) + 'B';
-            if (Math.abs(n) >= 1e6) return (n/1e6).toFixed(2) + 'M';
-            return n.toFixed(2);
-        }
-        return n;
-    }
-
-    function renderFundamentals(f) {
-        const container = document.getElementById('fundamentals');
-        container.innerHTML = '';
-
-        if (!f || f.error) {
-            container.innerHTML = '<div style="grid-column:1/-1;color:var(--text-muted);">Fundamentals unavailable.</div>';
-            return;
-        }
-
-        const items = [
-            { label: 'Market Cap', value: formatNumber(f.marketCap) },
-            { label: 'Trailing P/E', value: f.trailingPE ? f.trailingPE.toFixed(2) : 'N/A' },
-            { label: 'Forward P/E', value: f.forwardPE ? f.forwardPE.toFixed(2) : 'N/A' },
-            { label: 'EPS (TTM)', value: f.eps ? f.eps.toFixed(2) : 'N/A' },
-            { label: 'Dividend Yield', value: f.dividendYield ? (f.dividendYield * 100).toFixed(2) + '%' : 'N/A' },
-            { label: 'Beta', value: f.beta ? f.beta.toFixed(2) : 'N/A' },
-            { label: 'Revenue (TTM)', value: formatNumber(f.revenueTTM) },
-            { label: 'Profit Margins', value: f.profitMargins ? (f.profitMargins * 100).toFixed(2) + '%' : 'N/A' }
-        ];
-
-        items.forEach(it => {
-            const el = document.createElement('div');
-            el.className = 'fund-item';
-            el.innerHTML = `<div class="label">${it.label}</div><div class="value">${it.value}</div>`;
-            container.appendChild(el);
-        });
-    }
-
-    // --- 3. Chart.js Implementation ---
-    function renderChart(data) {
-        const ctx = document.getElementById('stockChart').getContext('2d');
-        
-        // Destroy existing chart to prevent hover flickering
-        if (myChart) { myChart.destroy(); }
-
-        myChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: data.labels,
-                datasets: [{
-                    label: `${currentActiveSymbol} Price (30 Days)`,
-                    data: data.prices,
-                    borderColor: '#2ecc71',
-                    backgroundColor: 'rgba(46, 204, 113, 0.1)',
-                    borderWidth: 2,
-                    pointRadius: 3,
-                    fill: true,
-                    tension: 0.3
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: { beginAtZero: false }
-                }
+                return;
             }
-        });
-    }
 
-    // --- 4. Watchlist Management ---
-    function refreshWatchlistButton() {
-        const isAdded = currentWatchlist.includes(currentActiveSymbol);
-        watchlistBtn.innerText = isAdded ? "Remove from watchlist" : "Add to watchlist";
-        watchlistBtn.style.backgroundColor = isAdded ? "#ff4d4d" : ""; 
-        watchlistBtn.style.color = isAdded ? "white" : "";
-    }
-
-    async function handleWatchlistAction() {
-        if (!currentActiveSymbol) return;
-
-        const isRemoving = currentWatchlist.includes(currentActiveSymbol);
-        const url = isRemoving ? `/api/watchlist/remove/${currentActiveSymbol}` : `/api/watchlist/add/${currentActiveSymbol}`;
-        const method = isRemoving ? 'DELETE' : 'POST';
-
-        try {
-            const response = await fetch(url, { method: method });
-            if (response.ok) {
-                if (isRemoving) {
-                    currentWatchlist = currentWatchlist.filter(s => s !== currentActiveSymbol);
-                } else {
-                    currentWatchlist.push(currentActiveSymbol);
-                }
-                refreshWatchlistButton();
-            }
-        } catch (err) {
-            console.error("Watchlist Update Error:", err);
-        }
-    }
-
-    // --- 5. News Rendering ---
-    function renderNews(newsItems) {
-        const container = document.getElementById('news-container');
-        container.innerHTML = '';
-
-        // If Python returns an empty list or error, show a message
-        if (!newsItems || newsItems.length === 0) {
-            container.innerHTML = '<p style="color: var(--text-muted); padding: 20px; text-align: center;">No news available for this stock.</p>';
-            return;
-        }
-
-        newsItems.forEach(article => {
-            const card = document.createElement('div');
-            card.className = 'news-card';
-            
-            // Handle date formatting - check different possible date fields
-            let dateStr = 'Recent';
-            if (article.time) {
+            debounceTimer = setTimeout(async () => {
                 try {
-                    const date = new Date(article.time);
-                    dateStr = date.toLocaleDateString(undefined, {
-                        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                    });
-                } catch (e) {
-                    console.warn("Date parsing error:", e);
+                    // Calls Proxy Search
+                    const res = await fetch(`${PROXY_URL}/search?q=${query}`);
+                    const matches = await res.json();
+                    renderSearchDropdown(matches);
+                } catch (err) {
+                    console.error("Search Error:", err);
                 }
+            }, 300);
+        });
+
+        function renderSearchDropdown(matches) {
+            resultsList.innerHTML = '';
+            if (!matches.length) { resultsList.style.display = 'none'; return; }
+
+            matches.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = `${item.symbol} - ${item.name}`;
+                li.onclick = () => {
+                    searchInput.value = item.symbol;
+                    resultsList.style.display = 'none';
+                    updateDashboard(item.symbol);
+                };
+                resultsList.appendChild(li);
+            });
+            resultsList.style.display = 'block';
+        }
+
+        // --- 2. Update Dashboard & Graph ---
+        async function updateDashboard(symbol) {
+            currentActiveSymbol = symbol.toUpperCase();
+            document.getElementById('news-container').innerHTML = "Loading data...";
+
+            refreshWatchlistButton();
+
+            try {
+                // Parallel fetch for Info, News, and History (Graph)
+                const [infoRes, newsRes, histRes, fundRes] = await Promise.all([
+                    fetch(`${PROXY_URL}/info/${symbol}`),
+                    fetch(`${PROXY_URL}/news/${symbol}`),
+                    fetch(`${PROXY_URL}/history/${symbol}`)
+                    , fetch(`${PROXY_URL}/fundamentals/${symbol}`)
+                ]);
+
+                // Check if responses are OK
+                if (!infoRes.ok) throw new Error(`Info fetch failed: ${infoRes.status}`);
+                if (!newsRes.ok) throw new Error(`News fetch failed: ${newsRes.status}`);
+                if (!histRes.ok) throw new Error(`History fetch failed: ${histRes.status}`);
+
+                const info = await infoRes.json();
+                const news = await newsRes.json();
+                const history = await histRes.json();
+                const fundamentals = await fundRes.json();
+
+                // Update Profile UI
+                document.getElementById('prof-title').innerText = `${info.symbol} - ${info.name}`;
+                document.getElementById('prof-industry').innerText = `Industry: ${info.industry}`;
+                document.getElementById('prof-url').innerText = `Website: ${info.website}`;
+                document.getElementById('prof-desc').innerText = info.description;
+                document.getElementById('prof-price').innerText = `Stock Price: $${info.price.toFixed(2)}`;
+                renderFundamentals(fundamentals);
+                renderNews(news);
+                renderChart(history);
+
+            } catch (err) {
+                console.error("Dashboard Error:", err);
+                document.getElementById('news-container').innerHTML =
+                    `<p style="color: red;">Error loading data: ${err.message}</p>`;
+            }
+        }
+
+        // --- 6. Fundamentals Rendering ---
+        function formatNumber(n) {
+            if (n === null || n === undefined) return 'N/A';
+            if (typeof n === 'number') {
+                if (Math.abs(n) >= 1e12) return (n / 1e12).toFixed(2) + 'T';
+                if (Math.abs(n) >= 1e9) return (n / 1e9).toFixed(2) + 'B';
+                if (Math.abs(n) >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+                return n.toFixed(2);
+            }
+            return n;
+        }
+
+        function renderFundamentals(f) {
+            const container = document.getElementById('fundamentals');
+            container.innerHTML = '';
+
+            if (!f || f.error) {
+                container.innerHTML = '<div style="grid-column:1/-1;color:var(--text-muted);">Fundamentals unavailable.</div>';
+                return;
             }
 
-            // Build the HTML content safely
-            card.innerHTML = `
+            const items = [
+                { label: 'Market Cap', value: formatNumber(f.marketCap) },
+                { label: 'Trailing P/E', value: f.trailingPE ? f.trailingPE.toFixed(2) : 'N/A' },
+                { label: 'Forward P/E', value: f.forwardPE ? f.forwardPE.toFixed(2) : 'N/A' },
+                { label: 'EPS (TTM)', value: f.eps ? f.eps.toFixed(2) : 'N/A' },
+                { label: 'Dividend Yield', value: f.dividendYield ? (f.dividendYield * 100).toFixed(2) + '%' : 'N/A' },
+                { label: 'Beta', value: f.beta ? f.beta.toFixed(2) : 'N/A' },
+                { label: 'Revenue (TTM)', value: formatNumber(f.revenueTTM) },
+                { label: 'Profit Margins', value: f.profitMargins ? (f.profitMargins * 100).toFixed(2) + '%' : 'N/A' }
+            ];
+
+            items.forEach(it => {
+                const el = document.createElement('div');
+                el.className = 'fund-item';
+                el.innerHTML = `<div class="label">${it.label}</div><div class="value">${it.value}</div>`;
+                container.appendChild(el);
+            });
+        }
+
+        // --- 3. Chart.js Implementation ---
+        function renderChart(data) {
+            const ctx = document.getElementById('stockChart').getContext('2d');
+
+            if (myChart) { myChart.destroy(); }
+
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: `${currentActiveSymbol} Price (30 Days)`,
+                        data: data.prices,
+                        borderColor: '#2ecc71',
+                        backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: false }
+                    }
+                }
+            });
+        }
+
+        // --- 4. Watchlist Management ---
+        function refreshWatchlistButton() {
+            const isAdded = currentWatchlist.includes(currentActiveSymbol);
+            watchlistBtn.innerText = isAdded ? "Remove from watchlist" : "Add to watchlist";
+            watchlistBtn.style.backgroundColor = isAdded ? "#ff4d4d" : "";
+            watchlistBtn.style.color = isAdded ? "white" : "";
+        }
+
+        async function handleWatchlistAction() {
+            if (!currentActiveSymbol) return;
+
+            const isRemoving = currentWatchlist.includes(currentActiveSymbol);
+            const url = isRemoving ? `/api/watchlist/remove?symbol=${currentActiveSymbol}` : `/api/watchlist/add/${currentActiveSymbol}`;
+            const method = isRemoving ? 'DELETE' : 'POST';
+
+            try {
+                // Fix: handle the different endpoint structures if necessary. 
+                // Previous code used /api/watchlist/remove?symbol=...
+                // Check StockActionController:
+                // @PostMapping("/watchlist/add/{symbol}")
+                // @DeleteMapping("/watchlist/remove") with @RequestParam String symbol
+
+                // Correct logic:
+                let fetchUrl = `${BACKEND_URL}/watchlist/add/${currentActiveSymbol}`;
+                if (isRemoving) {
+                    fetchUrl = `${BACKEND_URL}/watchlist/remove/${currentActiveSymbol}`;
+                }
+
+                const response = await fetch(fetchUrl, { method: method });
+                if (response.ok) {
+                    if (isRemoving) {
+                        currentWatchlist = currentWatchlist.filter(s => s !== currentActiveSymbol);
+                    } else {
+                        currentWatchlist.push(currentActiveSymbol);
+                    }
+                    refreshWatchlistButton();
+                }
+            } catch (err) {
+                console.error("Watchlist Update Error:", err);
+            }
+        }
+
+        // --- 5. News Rendering ---
+        function renderNews(newsItems) {
+            const container = document.getElementById('news-container');
+            container.innerHTML = '';
+
+            if (!newsItems || newsItems.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-muted); padding: 20px; text-align: center;">No news available for this stock.</p>';
+                return;
+            }
+
+            newsItems.forEach(article => {
+                const card = document.createElement('div');
+                card.className = 'news-card';
+
+                let dateStr = 'Recent';
+                if (article.time) {
+                    try {
+                        const date = new Date(article.time);
+                        dateStr = date.toLocaleDateString(undefined, {
+                            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+                        });
+                    } catch (e) {
+                        console.warn("Date parsing error:", e);
+                    }
+                }
+
+                card.innerHTML = `
                 <h4>${article.title || 'Untitled Article'}</h4>
                 <p class="news-meta">
                     <strong>${article.publisher || 'Finance News'}</strong> • ${dateStr}
                 </p>
                 <p>${article.summary || 'No summary available.'}</p>
-                ${article.url ? 
-                    `<a href="${article.url}" target="_blank">
+                ${article.url ?
+                        `<a href="${article.url}" target="_blank">
                         Read Full Article →
-                    </a>` : 
-                    '<span style="font-size: 0.85em; color: var(--text-muted);">No link available</span>'
-                }
+                    </a>` :
+                        '<span style="font-size: 0.85em; color: var(--text-muted);">No link available</span>'
+                    }
             `;
-            container.appendChild(card);
-        });
-    }
-
-    // Close search results when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!searchInput.contains(e.target)) resultsList.style.display = 'none';
-    });
-
-    // Auto-load AAPL on page load
-    window.addEventListener('DOMContentLoaded', () => {
-        updateDashboard('AAPL');
-        loadDashboardStats();
-    });
-    
-    async function loadDashboardStats() {
-        try {
-            // Fetch Purse Value
-            const purseResp = await fetch('/api/purse-value');
-            const purseValue = await purseResp.json();
-            document.getElementById('stat-purse').innerText = purseValue.toFixed(2);
-            
-            // Fetch holdings data
-            const holdingsResp = await fetch('/api/dashboard/stats');
-            const stats = await holdingsResp.json();
-            
-            let totalPortfolioValue = 0;
-            let totalInvestment = 0;
-            
-            for (const holding of stats.holdings) {
-                const priceResp = await fetch(`http://localhost:3000/quote/${holding.stock}`);
-                const priceData = await priceResp.json();
-                if (priceData.price) {
-                    const marketValue = priceData.price * holding.quantity;
-                    totalPortfolioValue += marketValue;
-                    totalInvestment += holding.total_invested;
-                }
-            }
-            
-            const totalPL = totalPortfolioValue - totalInvestment;
-            const totalPct = totalInvestment !== 0 ? (totalPL / totalInvestment) * 100 : 0;
-            
-            document.getElementById('stat-portfolio').innerText = totalPortfolioValue.toFixed(2);
-            document.getElementById('stat-pl').innerText = `$${totalPL.toFixed(2)}`;
-            const plWrapper = document.getElementById('stat-pl-wrapper');
-            plWrapper.className = totalPL >= 0 ? 'value positive' : 'value negative';
-            document.getElementById('stat-change').innerText = totalPct.toFixed(2);
-            const changeWrapper = document.getElementById('stat-change-wrapper');
-            changeWrapper.className = totalPct >= 0 ? 'value positive' : 'value negative';
-        } catch (e) {
-            console.error('Error loading dashboard stats:', e);
+                container.appendChild(card);
+            });
         }
-    }
-</script>
+
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target)) resultsList.style.display = 'none';
+        });
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            await initWatchlist();
+            updateDashboard('AAPL');
+            loadDashboardStats();
+        });
+
+        async function loadDashboardStats() {
+            try {
+                const purseResp = await fetch(`${BACKEND_URL}/purse-value`);
+                const purseValue = await purseResp.json();
+                document.getElementById('stat-purse').innerText = purseValue.toFixed(2);
+
+                const holdingsResp = await fetch(`${BACKEND_URL}/dashboard/stats`);
+                const stats = await holdingsResp.json();
+
+                let totalPortfolioValue = 0;
+                let totalInvestment = 0;
+
+                for (const holding of stats.holdings) {
+                    const priceResp = await fetch(`${PROXY_URL}/quote/${holding.stock}`);
+                    const priceData = await priceResp.json();
+                    if (priceData.price) {
+                        const marketValue = priceData.price * holding.quantity;
+                        totalPortfolioValue += marketValue;
+                        totalInvestment += holding.total_invested;
+                    }
+                }
+
+                const totalPL = totalPortfolioValue - totalInvestment;
+                const totalPct = totalInvestment !== 0 ? (totalPL / totalInvestment) * 100 : 0;
+
+                document.getElementById('stat-portfolio').innerText = totalPortfolioValue.toFixed(2);
+                document.getElementById('stat-pl').innerText = `$${totalPL.toFixed(2)}`;
+                const plWrapper = document.getElementById('stat-pl-wrapper');
+                plWrapper.className = totalPL >= 0 ? 'value positive' : 'value negative';
+                document.getElementById('stat-change').innerText = totalPct.toFixed(2);
+                const changeWrapper = document.getElementById('stat-change-wrapper');
+                changeWrapper.className = totalPct >= 0 ? 'value positive' : 'value negative';
+            } catch (e) {
+                console.error('Error loading dashboard stats:', e);
+            }
+        }
+    </script>
 </body>
+
 </html>

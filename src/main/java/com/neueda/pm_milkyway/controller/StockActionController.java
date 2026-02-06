@@ -85,7 +85,8 @@ public class StockActionController {
     }
 
     @DeleteMapping("/watchlist/remove/{symbol}")
-    public ResponseEntity<Void> removeFromWatchlist(@org.springframework.web.bind.annotation.PathVariable String symbol) {
+    public ResponseEntity<Void> removeFromWatchlist(
+            @org.springframework.web.bind.annotation.PathVariable String symbol) {
         watchlistService.removeFromWatchlist(symbol);
         return ResponseEntity.ok().build();
     }
@@ -111,5 +112,15 @@ public class StockActionController {
         response.put("holdings", holdings);
         response.put("purse", purseValue);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/transactions")
+    public ResponseEntity<List<com.neueda.pm_milkyway.entity.TransactionEntity>> getTransactions() {
+        return ResponseEntity.ok(transactionsService.getAllTransactions());
+    }
+
+    @GetMapping("/watchlist")
+    public ResponseEntity<List<String>> getWatchlist() {
+        return ResponseEntity.ok(watchlistService.getWatchlistItems());
     }
 }
