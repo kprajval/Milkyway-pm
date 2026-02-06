@@ -104,6 +104,18 @@
         
         .glow-green { animation: glowGreen 2s ease-in-out; }
         .glow-red { animation: glowRed 2s ease-in-out; }
+
+        /* EXPERIMENTAL: Language Toggle Styles */
+        .language-selector { position: relative; display: inline-block; }
+        .lang-toggle-btn { background: var(--surface-elevated); border: 1px solid var(--border); color: var(--text); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
+        .lang-toggle-btn:hover { background: var(--border); border-color: var(--accent); }
+        .language-dropdown { position: absolute; top: calc(100% + 8px); right: 0; background: var(--surface-elevated); border: 1px solid var(--border); border-radius: 8px; padding: 8px; min-width: 150px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); display: none; z-index: 1000; }
+        .language-dropdown.show { display: block; }
+        .lang-option { background: transparent; border: none; color: var(--text); padding: 10px 14px; width: 100%; text-align: left; cursor: pointer; border-radius: 6px; font-size: 14px; transition: background 0.2s; }
+        .lang-option:hover { background: var(--surface); }
+        .lang-option.active { background: var(--accent); color: var(--bg); font-weight: 600; }
+        .top-bar-with-lang { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
+        .top-bar-with-lang h1 { margin: 0; }
         
         @media print {
             body { background: white; color: black; }
@@ -130,47 +142,50 @@
 <div class="container">
     <div class="sidebar">
         <div class="sidebar-brand"><i class="fa fa-chart-line"></i> StockView</div>
-        <a th:href="@{/}"><i class="fa fa-wallet"></i> Dashboard</a>
-        <a th:href="@{/performance}"><i class="fa fa-chart-line"></i> Performance</a>
-        <a th:href="@{/market-lookup}"><i class="fa fa-search"></i> Market Lookup</a>
-        <a th:href="@{/transaction-history}" class="active"><i class="fa fa-receipt"></i> Transaction History</a>
+        <a th:href="@{/}"><i class="fa fa-wallet"></i> <span data-i18n="nav.dashboard">Dashboard</span></a>
+        <a th:href="@{/performance}"><i class="fa fa-chart-line"></i> <span data-i18n="nav.performance">Performance</span></a>
+        <a th:href="@{/market-lookup}"><i class="fa fa-search"></i> <span data-i18n="nav.market_lookup">Market Lookup</span></a>
+        <a th:href="@{/transaction-history}" class="active"><i class="fa fa-receipt"></i> <span data-i18n="nav.transaction_history">Transaction History</span></a>
     </div>
 
     <div class="main">
         <div class="portfolio-overview">
             <div class="overview-item">
-                <span>Total Purse</span>
+                <span data-i18n="dashboard.total_purse">Total Purse</span>
                 <span class="value" style="color: var(--accent);">$<span id="stat-purse">--</span></span>
             </div>
             <div class="overview-item">
-                <span>Portfolio Value</span>
+                <span data-i18n="dashboard.portfolio_value">Portfolio Value</span>
                 <span class="value positive">$<span id="stat-portfolio">--</span></span>
             </div>
             <div class="overview-item">
-                <span>Profit/Loss</span>
+                <span data-i18n="dashboard.profit_loss">Profit/Loss</span>
                 <span class="value" id="stat-pl-wrapper"><span id="stat-pl">--</span></span>
             </div>
             <div class="overview-item">
-                <span>Total Return</span>
+                <span data-i18n="dashboard.total_return">Total Return</span>
                 <span class="value" id="stat-change-wrapper"><span id="stat-change">--</span>%</span>
             </div>
         </div>
-        <div class="header-section">
-            <h1 class="page-title">Transaction History</h1>
-            <button class="btn-generate" onclick="generatePDF()"><i class="fa fa-file-pdf"></i> Generate Report</button>
+        <div class="top-bar-with-lang">
+            <h1 class="page-title" data-i18n="transactions.title">Transaction History</h1>
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <button class="btn-generate" onclick="generatePDF()"><i class="fa fa-file-pdf"></i> <span data-i18n="transactions.generate_report">Generate Report</span></button>
+                <div id="language-toggle-container"></div>
+            </div>
         </div>
 
         <div class="transaction-card">
-            <h2 class="section-title"><i class="fa fa-list"></i> All Transactions</h2>
+            <h2 class="section-title"><i class="fa fa-list"></i> <span data-i18n="transactions.transaction_history">All Transactions</span></h2>
             <table>
                 <thead>
                     <tr>
-                        <th>Transaction ID</th>
-                        <th>Date</th>
-                        <th>Type</th>
+                        <th data-i18n="transactions.transaction_id">Transaction ID</th>
+                        <th data-i18n="transactions.date">Date</th>
+                        <th data-i18n="transactions.type">Type</th>
                         <th>Value</th>
                         <th>Purse</th>
-                        <th>Status</th>
+                        <th data-i18n="transactions.status">Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -178,12 +193,16 @@
                         <td><span class="transaction-id" th:text="${t.id}">1</span></td>
                         <td th:text="${t.date}">2023-01-01</td>
                         <td>
-                            <span th:class="${t.type == 'BUY' ? 'type-buy' : 'type-sell'}" th:text="${t.type}">BUY</span>
+                            <span th:class="${t.type == 'BUY' ? 'type-buy' : 'type-sell'}" 
+                                  th:attr="data-i18n=${t.type == 'BUY' ? 'transactions.buy' : (t.type == 'SELL' ? 'transactions.sell' : (t.type == 'PURSE ADD' ? 'transactions.purse_add' : 'transactions.purse_deduct'))}"
+                                  th:text="${t.type}">BUY</span>
                         </td>
                         <td th:text="'$' + ${t.transactionValue}">$0.00</td>
                         <td th:text="'$' + ${t.purseValue}">$0.00</td>
                         <td>
-                            <span th:class="${t.status ? 'status-success' : 'status-failed'}" th:text="${t.status ? 'Success' : 'Failed'}">Status</span>
+                            <span th:class="${t.status ? 'status-success' : 'status-failed'}" 
+                                  th:attr="data-i18n=${t.status ? 'transactions.success' : 'transactions.failed'}"
+                                  th:text="${t.status ? 'Success' : 'Failed'}">Status</span>
                         </td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(transactions)}">
@@ -278,6 +297,7 @@ async function loadDashboardStats() {
 
 window.addEventListener('DOMContentLoaded', loadDashboardStats);
 </script>
+<script src="/js/language-toggle.js"></script>
 
 </body>
 </html>

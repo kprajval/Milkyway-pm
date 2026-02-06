@@ -153,6 +153,18 @@
         
         .glow-green { animation: glowGreen 2s ease-in-out; }
         .glow-red { animation: glowRed 2s ease-in-out; }
+
+        /* EXPERIMENTAL: Language Toggle Styles */
+        .language-selector { position: relative; display: inline-block; }
+        .lang-toggle-btn { background: var(--surface-elevated); border: 1px solid var(--border); color: var(--text); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
+        .lang-toggle-btn:hover { background: var(--border); border-color: var(--accent); }
+        .language-dropdown { position: absolute; top: calc(100% + 8px); right: 0; background: var(--surface-elevated); border: 1px solid var(--border); border-radius: 8px; padding: 8px; min-width: 150px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); display: none; z-index: 1000; }
+        .language-dropdown.show { display: block; }
+        .lang-option { background: transparent; border: none; color: var(--text); padding: 10px 14px; width: 100%; text-align: left; cursor: pointer; border-radius: 6px; font-size: 14px; transition: background 0.2s; }
+        .lang-option:hover { background: var(--surface); }
+        .lang-option.active { background: var(--accent); color: var(--bg); font-weight: 600; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
+        .top-bar h1 { margin: 0; }
     </style>
 </head>
 <body>
@@ -160,37 +172,40 @@
 <div class="container">
     <div class="sidebar">
         <div class="sidebar-brand"><i class="fa fa-chart-line"></i> StockView</div>
-        <a th:href="@{/}"><i class="fa fa-wallet"></i> Dashboard</a>
-        <a th:href="@{/performance}"><i class="fa fa-chart-line"></i> Performance</a>
-        <a th:href="@{/market-lookup}" class="active"><i class="fa fa-search"></i> Market Lookup</a>
-        <a th:href="@{/transaction-history}"><i class="fa fa-receipt"></i> Transaction History</a>
+        <a th:href="@{/}"><i class="fa fa-wallet"></i> <span data-i18n="nav.dashboard">Dashboard</span></a>
+        <a th:href="@{/performance}"><i class="fa fa-chart-line"></i> <span data-i18n="nav.performance">Performance</span></a>
+        <a th:href="@{/market-lookup}" class="active"><i class="fa fa-search"></i> <span data-i18n="nav.market_lookup">Market Lookup</span></a>
+        <a th:href="@{/transaction-history}"><i class="fa fa-receipt"></i> <span data-i18n="nav.transaction_history">Transaction History</span></a>
     </div>
 
     <div class="main">
-        <h1 class="page-title">Market Lookup</h1>
+        <div class="top-bar">
+            <h1 class="page-title" data-i18n="market.title">Market Lookup</h1>
+            <div id="language-toggle-container"></div>
+        </div>
         
         <div class="portfolio-overview">
             <div class="overview-item">
-                <span>Total Purse</span>
+                <span data-i18n="dashboard.total_purse">Total Purse</span>
                 <span class="value" style="color: var(--accent);">$<span id="stat-purse">--</span></span>
             </div>
             <div class="overview-item">
-                <span>Portfolio Value</span>
+                <span data-i18n="dashboard.portfolio_value">Portfolio Value</span>
                 <span class="value positive">$<span id="stat-portfolio">--</span></span>
             </div>
             <div class="overview-item">
-                <span>Profit/Loss</span>
+                <span data-i18n="dashboard.profit_loss">Profit/Loss</span>
                 <span class="value" id="stat-pl-wrapper"><span id="stat-pl">--</span></span>
             </div>
             <div class="overview-item">
-                <span>Total Return</span>
+                <span data-i18n="dashboard.total_return">Total Return</span>
                 <span class="value" id="stat-change-wrapper"><span id="stat-change">--</span>%</span>
             </div>
         </div>
 
         <div class="search-container">
             <i class="fa fa-search search-icon"></i>
-            <input type="text" id="search" placeholder="Search for stocks..." autocomplete="off">
+            <input type="text" id="search" placeholder="Search for stocks..." data-i18n-placeholder="market.search_placeholder" autocomplete="off">
             <ul id="search-results"></ul>
         </div>
 
@@ -203,20 +218,20 @@
                 <!-- fundamentals populated dynamically -->
             </div>
             
-            <button id="watchlist-btn" onclick="handleWatchlistAction()">Add to watchlist</button>
+            <button id="watchlist-btn" onclick="handleWatchlistAction()" data-i18n="market.add_to_watchlist">Add to watchlist</button>
 
             <div class="chart-wrapper">
                 <canvas id="stockChart"></canvas>
             </div>
 
-            <h2 class="section-title"><i class="fa fa-info-circle"></i> Company Description</h2>
+            <h2 class="section-title"><i class="fa fa-info-circle"></i> <span data-i18n="market.company_profile">Company Description</span></h2>
             <p id="prof-desc">Description of the company</p>
         </div>
 
         <div class="latest-news">
-            <h2 class="section-title"><i class="fa fa-newspaper"></i> Latest News & Sentiment</h2>
+            <h2 class="section-title"><i class="fa fa-newspaper"></i> <span data-i18n="market.latest_news">Latest News & Sentiment</span></h2>
             <div id="news-container">
-                <p style="color: var(--text-muted); padding: 20px; text-align: center;">Search for a stock to see related news.</p>
+                <p style="color: var(--text-muted); padding: 20px; text-align: center;" data-i18n="market.search_for_news">Search for a stock to see related news.</p>
             </div>
         </div>
     </div>
@@ -303,12 +318,17 @@
             // Debug log to see what news data looks like
             console.log('News data received:', news);
 
-            // Update Profile UI
+            // Update Profile UI with translations
             document.getElementById('prof-title').innerText = `${info.symbol} - ${info.name}`;
-            document.getElementById('prof-industry').innerText = `Industry: ${info.industry}`;
-            document.getElementById('prof-url').innerText = `Website: ${info.website}`;
+            const currentLang = (typeof languageToggle !== 'undefined' && languageToggle.currentLanguage !== 'en') 
+                ? languageToggle.currentLanguage : null;
+            const industryLabel = currentLang ? languageToggle.getTranslation(currentLang, 'market.industry') : 'Industry';
+            const websiteLabel = currentLang ? languageToggle.getTranslation(currentLang, 'market.website') : 'Website';
+            const priceLabel = currentLang ? languageToggle.getTranslation(currentLang, 'market.stock_price') : 'Stock Price';
+            document.getElementById('prof-industry').innerText = `${industryLabel}: ${info.industry}`;
+            document.getElementById('prof-url').innerText = `${websiteLabel}: ${info.website}`;
             document.getElementById('prof-desc').innerText = info.description;
-            document.getElementById('prof-price').innerText = `Stock Price: $${info.price.toFixed(2)}`;
+            document.getElementById('prof-price').innerText = `${priceLabel}: $${info.price.toFixed(2)}`;
             renderFundamentals(fundamentals);
             renderNews(news);
             renderChart(history);
@@ -337,27 +357,32 @@
         container.innerHTML = '';
 
         if (!f || f.error) {
-            container.innerHTML = '<div style="grid-column:1/-1;color:var(--text-muted);">Fundamentals unavailable.</div>';
+            container.innerHTML = '<div style="grid-column:1/-1;color:var(--text-muted);" data-i18n="market.fundamentals_unavailable">Fundamentals unavailable.</div>';
             return;
         }
 
         const items = [
-            { label: 'Market Cap', value: formatNumber(f.marketCap) },
-            { label: 'Trailing P/E', value: f.trailingPE ? f.trailingPE.toFixed(2) : 'N/A' },
-            { label: 'Forward P/E', value: f.forwardPE ? f.forwardPE.toFixed(2) : 'N/A' },
-            { label: 'EPS (TTM)', value: f.eps ? f.eps.toFixed(2) : 'N/A' },
-            { label: 'Dividend Yield', value: f.dividendYield ? (f.dividendYield * 100).toFixed(2) + '%' : 'N/A' },
-            { label: 'Beta', value: f.beta ? f.beta.toFixed(2) : 'N/A' },
-            { label: 'Revenue (TTM)', value: formatNumber(f.revenueTTM) },
-            { label: 'Profit Margins', value: f.profitMargins ? (f.profitMargins * 100).toFixed(2) + '%' : 'N/A' }
+            { label: 'Market Cap', key: 'market.market_cap', value: formatNumber(f.marketCap) },
+            { label: 'Trailing P/E', key: 'market.trailing_pe', value: f.trailingPE ? f.trailingPE.toFixed(2) : 'N/A' },
+            { label: 'Forward P/E', key: 'market.forward_pe', value: f.forwardPE ? f.forwardPE.toFixed(2) : 'N/A' },
+            { label: 'EPS (TTM)', key: 'market.eps_ttm', value: f.eps ? f.eps.toFixed(2) : 'N/A' },
+            { label: 'Dividend Yield', key: 'market.dividend_yield', value: f.dividendYield ? (f.dividendYield * 100).toFixed(2) + '%' : 'N/A' },
+            { label: 'Beta', key: 'market.beta', value: f.beta ? f.beta.toFixed(2) : 'N/A' },
+            { label: 'Revenue (TTM)', key: 'market.revenue_ttm', value: formatNumber(f.revenueTTM) },
+            { label: 'Profit Margins', key: 'market.profit_margins', value: f.profitMargins ? (f.profitMargins * 100).toFixed(2) + '%' : 'N/A' }
         ];
 
         items.forEach(it => {
             const el = document.createElement('div');
             el.className = 'fund-item';
-            el.innerHTML = `<div class="label">${it.label}</div><div class="value">${it.value}</div>`;
+            el.innerHTML = `<div class="label" data-i18n="${it.key}">${it.label}</div><div class="value">${it.value}</div>`;
             container.appendChild(el);
         });
+        
+        // Re-apply language translation after dynamic content is added
+        if (typeof languageToggle !== 'undefined' && languageToggle.currentLanguage !== 'en') {
+            languageToggle.applyLanguage(languageToggle.currentLanguage);
+        }
     }
 
     // --- 3. Chart.js Implementation ---
@@ -395,9 +420,24 @@
     // --- 4. Watchlist Management ---
     function refreshWatchlistButton() {
         const isAdded = currentWatchlist.includes(currentActiveSymbol);
-        watchlistBtn.innerText = isAdded ? "Remove from watchlist" : "Add to watchlist";
-        watchlistBtn.style.backgroundColor = isAdded ? "#ff4d4d" : ""; 
-        watchlistBtn.style.color = isAdded ? "white" : "";
+        const btn = document.getElementById('watchlist-btn');
+        
+        if (isAdded) {
+            btn.setAttribute('data-i18n', 'market.remove_from_watchlist');
+            btn.textContent = "Remove from watchlist";
+            btn.style.backgroundColor = "#ff4d4d";
+            btn.style.color = "white";
+        } else {
+            btn.setAttribute('data-i18n', 'market.add_to_watchlist');
+            btn.textContent = "Add to watchlist";
+            btn.style.backgroundColor = "";
+            btn.style.color = "";
+        }
+        
+        // Re-apply language translation
+        if (typeof languageToggle !== 'undefined' && languageToggle.currentLanguage !== 'en') {
+            languageToggle.applyLanguage(languageToggle.currentLanguage);
+        }
     }
 
     async function handleWatchlistAction() {
@@ -429,7 +469,10 @@
 
         // If Python returns an empty list or error, show a message
         if (!newsItems || newsItems.length === 0) {
-            container.innerHTML = '<p style="color: var(--text-muted); padding: 20px; text-align: center;">No news available for this stock.</p>';
+            container.innerHTML = '<p style="color: var(--text-muted); padding: 20px; text-align: center;" data-i18n="market.no_news">No news available for this stock.</p>';
+            if (typeof languageToggle !== 'undefined' && languageToggle.currentLanguage !== 'en') {
+                languageToggle.applyLanguage(languageToggle.currentLanguage);
+            }
             return;
         }
 
@@ -518,5 +561,6 @@
         }
     }
 </script>
+<script src="/js/language-toggle.js"></script>
 </body>
 </html>

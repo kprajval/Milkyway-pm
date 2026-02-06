@@ -313,6 +313,76 @@
                 padding: 20px;
             }
         }
+
+        /* ============================================
+           EXPERIMENTAL: Language Toggle Styles
+           Can be safely removed
+           ============================================ */
+        .language-selector {
+            position: relative;
+            display: inline-block;
+        }
+
+        .lang-toggle-btn {
+            background: var(--surface-elevated);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .lang-toggle-btn:hover {
+            background: var(--border);
+            border-color: var(--accent);
+        }
+
+        .language-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: var(--surface-elevated);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px;
+            min-width: 150px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 1000;
+        }
+
+        .language-dropdown.show {
+            display: block;
+        }
+
+        .lang-option {
+            background: transparent;
+            border: none;
+            color: var(--text);
+            padding: 10px 14px;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .lang-option:hover {
+            background: var(--surface);
+        }
+
+        .lang-option.active {
+            background: var(--accent);
+            color: var(--bg);
+            font-weight: 600;
+        }
+        /* ============================================ */
     </style>
 </head>
 
@@ -322,58 +392,60 @@
         <div class="sidebar">
             <div class="sidebar-brand"><i class="fa fa-chart-line"></i> StockView</div>
             <a th:href="@{/}" class="active">
-                <i class="fa fa-wallet"></i> Dashboard
+                <i class="fa fa-wallet"></i> <span data-i18n="nav.dashboard">Dashboard</span>
             </a>
             <a th:href="@{/performance}">
-                <i class="fa fa-chart-line"></i> Performance
+                <i class="fa fa-chart-line"></i> <span data-i18n="nav.performance">Performance</span>
             </a>
             <a th:href="@{/market-lookup}">
-                <i class="fa fa-search"></i> Market Lookup
+                <i class="fa fa-search"></i> <span data-i18n="nav.market_lookup">Market Lookup</span>
             </a>
             <a th:href="@{/transaction-history}">
-                <i class="fa fa-history"></i> Transaction History
+                <i class="fa fa-history"></i> <span data-i18n="nav.transaction_history">Transaction History</span>
             </a>
         </div>
 
         <div class="main">
             <div class="top-bar">
-                <h1 class="page-title">Dashboard</h1>
+                <h1 class="page-title" data-i18n="dashboard.title">Dashboard</h1>
+                <!-- EXPERIMENTAL: Language Toggle Button -->
+                <div id="language-toggle-container"></div>
             </div>
 
             <div class="portfolio-overview">
                 <div class="overview-item">
-                    <span>Total Purse</span>
+                    <span data-i18n="dashboard.total_purse">Total Purse</span>
                     <span class="value" style="color: var(--accent);">$<span id="stat-purse">--</span></span>
                 </div>
                 <div class="overview-item">
-                    <span>Portfolio Value</span>
+                    <span data-i18n="dashboard.portfolio_value">Portfolio Value</span>
                     <span class="value positive">$<span id="stat-portfolio">--</span></span>
                 </div>
                 <div class="overview-item">
-                    <span>Profit/Loss</span>
+                    <span data-i18n="dashboard.profit_loss">Profit/Loss</span>
                     <span class="value" id="stat-pl-wrapper"><span id="stat-pl">--</span></span>
                 </div>
                 <div class="overview-item">
-                    <span>Total Return</span>
+                    <span data-i18n="dashboard.total_return">Total Return</span>
                     <span class="value" id="stat-change-wrapper"><span id="stat-change">--</span>%</span>
                 </div>
             </div>
 
             <div style="display:flex;gap:8px;align-items:center;margin-bottom:18px;">
-                <input id="purse-amount" type="number" step="0.01" placeholder="Amount" style="padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);width:160px;">
-                <button onclick="addPurse()">Add Purse</button>
-                <button onclick="deductPurse()" style="background:#f87171;color:var(--bg);">Deduct Purse</button>
+                <input id="purse-amount" type="number" step="0.01" data-i18n-placeholder="dashboard.amount_placeholder" placeholder="Amount" style="padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);width:160px;">
+                <button onclick="addPurse()" data-i18n="dashboard.add_purse">Add Purse</button>
+                <button onclick="deductPurse()" style="background:#f87171;color:var(--bg);" data-i18n="dashboard.deduct_purse">Deduct Purse</button>
             </div>
 
             <div class="dashboard-grid">
                 <div class="card">
-                    <div class="card-title">Asset Allocation</div>
+                    <div class="card-title" data-i18n="dashboard.asset_allocation">Asset Allocation</div>
                     <div class="chart-wrap">
                         <canvas id="allocationChart"></canvas>
                     </div>
                 </div>
                 <div class="card">
-                    <div class="card-title">Cumulative Performance (30 Days)</div>
+                    <div class="card-title" data-i18n="dashboard.cumulative_performance">Cumulative Performance (30 Days)</div>
                     <div class="chart-wrap">
                         <canvas id="cumulativeChart"></canvas>
                     </div>
@@ -381,18 +453,18 @@
             </div>
 
             <div class="card holdings-card">
-                <div class="card-title">Current Holdings</div>
+                <div class="card-title" data-i18n="dashboard.current_holdings">Current Holdings</div>
                 <table>
                     <thead>
                         <tr>
-                            <th>Stock</th>
-                            <th>Quantity</th>
-                            <th>Current Price</th>
-                            <th>Invested</th>
-                            <th>Market Value</th>
-                            <th>P/L</th>
-                            <th>Change %</th>
-                            <th>Actions</th>
+                            <th data-i18n="dashboard.stock">Stock</th>
+                            <th data-i18n="dashboard.quantity">Quantity</th>
+                            <th data-i18n="dashboard.current_price">Current Price</th>
+                            <th data-i18n="dashboard.invested">Invested</th>
+                            <th data-i18n="dashboard.market_value">Market Value</th>
+                            <th data-i18n="dashboard.pl">P/L</th>
+                            <th data-i18n="dashboard.change_percent">Change %</th>
+                            <th data-i18n="dashboard.actions">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -406,7 +478,7 @@
                             <td class="pct-change">--</td>
                             <td>
                                 <button th:onclick="showGraph([[${item.stock}]])"><i class="fa fa-chart-area"></i>
-                                    Graph</button>
+                                    <span data-i18n="dashboard.graph">Graph</span></button>
                             </td>
                         </tr>
                     </tbody>
@@ -417,9 +489,9 @@
 
     <div id="graphModal" class="modal">
         <div class="modal-content">
-            <h3 id="graphTitle">Stock History</h3>
+            <h3 id="graphTitle" data-i18n="dashboard.stock_history">Stock History</h3>
             <canvas id="stockChart" style="height: 300px;"></canvas>
-            <button class="btn-cancel" onclick="closeGraph()">Close</button>
+            <button class="btn-cancel" onclick="closeGraph()" data-i18n="common.close">Close</button>
         </div>
     </div>
 
@@ -744,7 +816,7 @@
                     </div>
                     <div style="padding: 10px; border-top: 1px solid #eee; display: flex; gap: 5px; background: white;">
                         <input type="text" id="chat-input" placeholder="Type a message..." style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 20px; outline: none;">
-                        <button id="chat-send" style="background: #007bff; color: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer;">Send</button>
+                        <button id="chat-send" style="background: #007bff; color: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer;" data-i18n="common.send">Send</button>
                     </div>
                 </div>
             </div>
@@ -893,6 +965,10 @@
 
         document.addEventListener('DOMContentLoaded', initDashboard);
     </script>
+
+    <!-- EXPERIMENTAL: Language Toggle System -->
+    <!-- TO DISABLE: Simply comment out or remove this script tag -->
+    <script src="/js/language-toggle.js"></script>
 </body>
 
 </html>
