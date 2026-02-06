@@ -26,13 +26,29 @@
         }
 
         @keyframes glowGreen {
-            0%, 100% { color: var(--accent); }
-            50% { color: var(--green); text-shadow: 0 0 8px var(--green); }
+
+            0%,
+            100% {
+                color: var(--accent);
+            }
+
+            50% {
+                color: var(--green);
+                text-shadow: 0 0 8px var(--green);
+            }
         }
 
         @keyframes glowRed {
-            0%, 100% { color: var(--accent); }
-            50% { color: var(--red); text-shadow: 0 0 8px var(--red); }
+
+            0%,
+            100% {
+                color: var(--accent);
+            }
+
+            50% {
+                color: var(--red);
+                text-shadow: 0 0 8px var(--red);
+            }
         }
 
         * {
@@ -129,14 +145,46 @@
             flex-wrap: wrap;
             margin-bottom: 28px;
         }
-        .overview-item { flex: 1; min-width: 180px; }
-        .overview-item > span:first-child { font-size: 16px; color: var(--text-muted); display: block; margin-bottom: 6px; font-weight: 500; }
-        .overview-item .value { font-size: 42px; font-weight: 700; letter-spacing: -0.02em; display: inline; }
-        .overview-item .value span { display: inline; }
-        .overview-item .value.positive { color: var(--green); }
-        .overview-item .value.negative { color: var(--red); }
-        .overview-item .value.glow-green { animation: glowGreen 2s ease-in-out; }
-        .overview-item .value.glow-red { animation: glowRed 2s ease-in-out; }
+
+        .overview-item {
+            flex: 1;
+            min-width: 180px;
+        }
+
+        .overview-item>span:first-child {
+            font-size: 16px;
+            color: var(--text-muted);
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        .overview-item .value {
+            font-size: 42px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            display: inline;
+        }
+
+        .overview-item .value span {
+            display: inline;
+        }
+
+        .overview-item .value.positive {
+            color: var(--green);
+        }
+
+        .overview-item .value.negative {
+            color: var(--red);
+        }
+
+        .overview-item .value.glow-green {
+            animation: glowGreen 2s ease-in-out;
+        }
+
+        .overview-item .value.glow-red {
+            animation: glowRed 2s ease-in-out;
+        }
 
         .dashboard-grid {
             display: grid;
@@ -321,16 +369,16 @@
     <div class="container">
         <div class="sidebar">
             <div class="sidebar-brand"><i class="fa fa-chart-line"></i> StockView</div>
-            <a th:href="@{/}" class="active">
+            <a href="Dashboard.html" class="active">
                 <i class="fa fa-wallet"></i> Dashboard
             </a>
-            <a th:href="@{/performance}">
+            <a href="Performance.html">
                 <i class="fa fa-chart-line"></i> Performance
             </a>
-            <a th:href="@{/market-lookup}">
+            <a href="MarketLookup.html">
                 <i class="fa fa-search"></i> Market Lookup
             </a>
-            <a th:href="@{/transaction-history}">
+            <a href="TransactionHistory.html">
                 <i class="fa fa-history"></i> Transaction History
             </a>
         </div>
@@ -360,7 +408,8 @@
             </div>
 
             <div style="display:flex;gap:8px;align-items:center;margin-bottom:18px;">
-                <input id="purse-amount" type="number" step="0.01" placeholder="Amount" style="padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);width:160px;">
+                <input id="purse-amount" type="number" step="0.01" placeholder="Amount"
+                    style="padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);width:160px;">
                 <button onclick="addPurse()">Add Purse</button>
                 <button onclick="deductPurse()" style="background:#f87171;color:var(--bg);">Deduct Purse</button>
             </div>
@@ -395,20 +444,8 @@
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr th:each="item : ${holdings}" class="stock-row" th:data-stock="${item.stock}">
-                            <td><span class="symbol" th:text="${item.stock}">Stock</span></td>
-                            <td class="qty" th:text="${item.quantity}">0</td>
-                            <td class="current-price">Loading...</td>
-                            <td class="investment-value" th:text="'$' + ${item.total_invested}">$0.00</td>
-                            <td class="market-value">--</td>
-                            <td class="profit-loss">--</td>
-                            <td class="pct-change">--</td>
-                            <td>
-                                <button th:onclick="showGraph([[${item.stock}]])"><i class="fa fa-chart-area"></i>
-                                    Graph</button>
-                            </td>
-                        </tr>
+                    <tbody id="holdings-body">
+                        <!-- Dynamic Content via JS -->
                     </tbody>
                 </table>
             </div>
@@ -424,6 +461,9 @@
     </div>
 
     <script>
+        const BACKEND_URL = 'http://localhost:8086/api';
+        const PROXY_URL = 'http://localhost:3000';
+
         let myChart = null;
         let allocationChart = null;
         let cumulativeChart = null;
@@ -433,71 +473,98 @@
         Chart.defaults.font.family = "'DM Sans', sans-serif";
 
         async function initDashboard() {
-            const rows = document.querySelectorAll('.stock-row');
             let totalPortfolioValue = 0;
             let totalInvestment = 0;
-
             const labels = [];
             const marketValues = [];
 
-            // 1. Fetch Purse Value (Spring Boot API)
             try {
-                const purseResp = await fetch('/api/purse-value');
-                const purseValue = await purseResp.json();
-                document.getElementById('stat-purse').innerText = purseValue.toFixed(2);
-            } catch (e) { console.error("Purse fetch error", e); }
+                // 1. Fetch Dashboard Stats from Backend (Purse + Holdings)
+                const res = await fetch(`${BACKEND_URL}/dashboard/stats`);
+                const data = await res.json();
 
-            // 2. Process Holdings and Fetch Prices (Python Proxy)
-            for (const row of rows) {
-                const stockCode = row.getAttribute('data-stock');
-                try {
-                    const response = await fetch(`http://localhost:3000/quote/${stockCode}`);
-                    const data = await response.json();
+                // Set Purse
+                document.getElementById('stat-purse').innerText = data.purse.toFixed(2);
 
-                    if (data.price) {
-                        const qty = parseFloat(row.querySelector('.qty').innerText) || 0;
-                        const investVal = parseFloat(row.querySelector('.investment-value').innerText.replace('$', '')) || 0;
-                        const marketValue = data.price * qty;
-                        const profitLoss = marketValue - investVal;
-                        const pctChange = investVal !== 0 ? ((profitLoss / investVal) * 100) : 0;
+                const holdings = data.holdings;
+                const tbody = document.getElementById('holdings-body');
+                tbody.innerHTML = ''; // Clear loading state
 
-                        // Update Table
-                        row.querySelector('.current-price').innerText = `$${data.price.toFixed(2)}`;
-                        row.querySelector('.market-value').innerText = `$${marketValue.toFixed(2)}`;
-                        row.querySelector('.profit-loss').innerText = `$${profitLoss.toFixed(2)}`;
-                        row.querySelector('.profit-loss').className = profitLoss >= 0 ? 'profit-loss pl-positive' : 'profit-loss pl-negative';
-                        row.querySelector('.pct-change').innerText = `${pctChange.toFixed(2)}%`;
+                const rowsData = []; // Store for graph rendering
 
-                        // Aggregate Totals
-                        totalPortfolioValue += marketValue;
-                        totalInvestment += investVal;
+                for (const item of holdings) {
+                    const stockCode = item.stock;
+                    const qty = item.quantity;
+                    const investVal = item.total_invested;
 
-                        // Prepare Chart Data
-                        labels.push(stockCode);
-                        marketValues.push(marketValue);
+                    // Create Row Outline
+                    const tr = document.createElement('tr');
+                    tr.className = 'stock-row';
+                    tr.setAttribute('data-stock', stockCode);
+                    tr.innerHTML = `
+                        <td><span class="symbol">${stockCode}</span></td>
+                        <td class="qty">${qty}</td>
+                        <td class="current-price">Loading...</td>
+                        <td class="investment-value">$${investVal.toFixed(2)}</td>
+                        <td class="market-value">--</td>
+                        <td class="profit-loss">--</td>
+                        <td class="pct-change">--</td>
+                        <td>
+                            <button onclick="showGraph('${stockCode}')"><i class="fa fa-chart-area"></i> Graph</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+
+                    // Fetch Price from Proxy
+                    try {
+                        const priceRes = await fetch(`${PROXY_URL}/quote/${stockCode}`);
+                        const priceData = await priceRes.json();
+
+                        if (priceData.price) {
+                            const price = priceData.price;
+                            const marketValue = price * qty;
+                            const profitLoss = marketValue - investVal;
+                            const pctChange = investVal !== 0 ? ((profitLoss / investVal) * 100) : 0;
+
+                            // Update Row
+                            tr.querySelector('.current-price').innerText = `$${price.toFixed(2)}`;
+                            tr.querySelector('.market-value').innerText = `$${marketValue.toFixed(2)}`;
+                            tr.querySelector('.profit-loss').innerText = `$${profitLoss.toFixed(2)}`;
+                            tr.querySelector('.profit-loss').className = profitLoss >= 0 ? 'profit-loss pl-positive' : 'profit-loss pl-negative';
+                            tr.querySelector('.pct-change').innerText = `${pctChange.toFixed(2)}%`;
+
+                            // Aggregate
+                            totalPortfolioValue += marketValue;
+                            totalInvestment += investVal;
+
+                            labels.push(stockCode);
+                            marketValues.push(marketValue);
+
+                            rowsData.push({ stock: stockCode }); // For cumulative chart
+                        }
+                    } catch (e) {
+                        console.error("Error fetching price for", stockCode, e);
+                        tr.querySelector('.current-price').innerText = "Error";
                     }
-                } catch (e) { console.error("Error fetching", stockCode); }
+                }
+
+                // Update Summary Stats
+                const totalPL = totalPortfolioValue - totalInvestment;
+                const totalPct = totalInvestment !== 0 ? (totalPL / totalInvestment) * 100 : 0;
+
+                document.getElementById('stat-portfolio').innerText = totalPortfolioValue.toFixed(2);
+                document.getElementById('stat-pl').innerText = `$${totalPL.toFixed(2)}`;
+                document.getElementById('stat-pl-wrapper').className = totalPL >= 0 ? 'value positive' : 'value negative';
+                document.getElementById('stat-change').innerText = totalPct.toFixed(2);
+                document.getElementById('stat-change-wrapper').className = totalPct >= 0 ? 'positive' : 'negative';
+
+                // Render Charts
+                renderDonutChart(labels, marketValues);
+                renderCumulativeChart(rowsData);
+
+            } catch (e) {
+                console.error("Dashboard Init Error", e);
             }
-
-        // 3. Update Summary Stats
-        const totalPL = totalPortfolioValue - totalInvestment;
-        const totalPct = totalInvestment !== 0 ? (totalPL / totalInvestment) * 100 : 0;
-        
-        document.getElementById('stat-portfolio').innerText = totalPortfolioValue.toFixed(2);
-        document.getElementById('stat-pl').innerText = `$${totalPL.toFixed(2)}`;
-        const plWrapper = document.getElementById('stat-pl-wrapper');
-        plWrapper.className = totalPL >= 0 ? 'value positive' : 'value negative';
-        document.getElementById('stat-change').innerText = totalPct.toFixed(2);
-        const changeWrapper = document.getElementById('stat-change-wrapper');
-        changeWrapper.className = totalPct >= 0 ? 'positive' : 'negative';
-        const changePercent = document.getElementById('stat-change-percent');
-        if (changePercent) changePercent.className = totalPct >= 0 ? 'positive' : 'negative';
-
-            // 4. Render Donut Chart
-            renderDonutChart(labels, marketValues);
-            
-            // 5. Render Cumulative Performance Chart
-            await renderCumulativeChart(rows);
         }
 
         async function addPurse() {
@@ -506,13 +573,12 @@
             if (!amt || amt <= 0) { alert('Enter a positive amount'); return; }
 
             try {
-                const res = await fetch(`/api/purse/add?amount=${encodeURIComponent(amt)}`, { method: 'POST' });
+                const res = await fetch(`${BACKEND_URL}/purse/add?amount=${encodeURIComponent(amt)}`, { method: 'POST' });
                 if (res.ok) {
                     el.value = '';
-                    // Add green glow animation
                     const purseValue = document.querySelector('#stat-purse').parentElement;
                     purseValue.classList.remove('glow-green', 'glow-red');
-                    void purseValue.offsetWidth; // Force reflow
+                    void purseValue.offsetWidth;
                     purseValue.classList.add('glow-green');
                     setTimeout(() => purseValue.classList.remove('glow-green'), 2000);
                     initDashboard();
@@ -529,13 +595,12 @@
             if (!amt || amt <= 0) { alert('Enter a positive amount'); return; }
 
             try {
-                const res = await fetch(`/api/purse/deduct?amount=${encodeURIComponent(amt)}`, { method: 'POST' });
+                const res = await fetch(`${BACKEND_URL}/purse/deduct?amount=${encodeURIComponent(amt)}`, { method: 'POST' });
                 if (res.ok) {
                     el.value = '';
-                    // Add red glow animation
                     const purseValue = document.querySelector('#stat-purse').parentElement;
                     purseValue.classList.remove('glow-green', 'glow-red');
-                    void purseValue.offsetWidth; // Force reflow
+                    void purseValue.offsetWidth;
                     purseValue.classList.add('glow-red');
                     setTimeout(() => purseValue.classList.remove('glow-red'), 2000);
                     initDashboard();
@@ -579,9 +644,9 @@
             });
         }
 
-        async function renderCumulativeChart(rows) {
+        async function renderCumulativeChart(holdings) {
             const ctx = document.getElementById('cumulativeChart').getContext('2d');
-            
+
             // Destroy previous chart instance
             if (cumulativeChart) {
                 try { cumulativeChart.destroy(); } catch (e) { /* ignore */ }
@@ -592,31 +657,32 @@
             const colors = ['#22d3ee', '#34d399', '#f59e0b', '#f87171', '#a78bfa', '#fb923c'];
             let sharedLabels = null;
 
-            for (let i = 0; i < rows.length; i++) {
-                const row = rows[i];
-                const stockCode = row.getAttribute('data-stock');
-                
-                try {
-                    const response = await fetch(`http://localhost:3000/history/${stockCode}`);
-                    const data = await response.json();
-                    
-                    if (data.labels && data.prices) {
-                        if (!sharedLabels) sharedLabels = data.labels;
-                        
-                        datasets.push({
-                            label: stockCode,
-                            data: data.prices,
-                            borderColor: colors[i % colors.length],
-                            backgroundColor: 'transparent',
-                            borderWidth: 2,
-                            pointRadius: 0,
-                            pointHoverRadius: 4,
-                            tension: 0.35,
-                            fill: false
-                        });
+            if (holdings) {
+                for (let i = 0; i < holdings.length; i++) {
+                    const stockCode = holdings[i].stock;
+
+                    try {
+                        const response = await fetch(`${PROXY_URL}/history/${stockCode}`);
+                        const data = await response.json();
+
+                        if (data.labels && data.prices) {
+                            if (!sharedLabels) sharedLabels = data.labels;
+
+                            datasets.push({
+                                label: stockCode,
+                                data: data.prices,
+                                borderColor: colors[i % colors.length],
+                                backgroundColor: 'transparent',
+                                borderWidth: 2,
+                                pointRadius: 0,
+                                pointHoverRadius: 4,
+                                tension: 0.35,
+                                fill: false
+                            });
+                        }
+                    } catch (e) {
+                        console.error(`Error fetching history for ${stockCode}:`, e);
                     }
-                } catch (e) {
-                    console.error(`Error fetching history for ${stockCode}:`, e);
                 }
             }
 
@@ -646,11 +712,11 @@
                         axis: 'x'
                     },
                     scales: {
-                        x: { 
+                        x: {
                             grid: { display: false },
                             ticks: { maxTicksLimit: 8 }
                         },
-                        y: { 
+                        y: {
                             grid: { color: 'rgba(42, 49, 66, 0.6)' },
                             beginAtZero: false
                         }
@@ -667,7 +733,7 @@
                                 const index = legendItem.datasetIndex;
                                 const ci = legend.chart;
                                 const meta = ci.getDatasetMeta(index);
-                                
+
                                 // Toggle dataset visibility
                                 meta.hidden = meta.hidden === null ? !ci.data.datasets[index].hidden : null;
                                 ci.update();
@@ -675,7 +741,7 @@
                         },
                         tooltip: {
                             callbacks: {
-                                label: function(context) {
+                                label: function (context) {
                                     return context.dataset.label + ': $' + context.parsed.y.toFixed(2);
                                 }
                             }
@@ -688,7 +754,7 @@
         async function showGraph(symbol) {
             document.getElementById('graphModal').style.display = 'flex';
             document.getElementById('graphTitle').innerText = symbol + " - 30 Day History";
-            const response = await fetch(`http://localhost:3000/history/${symbol}`);
+            const response = await fetch(`${PROXY_URL}/history/${symbol}`);
             const data = await response.json();
             const ctx = document.getElementById('stockChart').getContext('2d');
             if (myChart) { myChart.destroy(); }

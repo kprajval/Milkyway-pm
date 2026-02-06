@@ -23,52 +23,80 @@ public class TransactionEntity {
     private BigDecimal purseValue;
     private Boolean status;
 
-    public Integer getId() { 
-        return id; 
+    public Integer getId() {
+        return id;
     }
 
-    public void setId(Integer id) { 
-        this.id = id; 
+    public void setId(Integer id) {
+        this.id = id;
     }
 
-    public LocalDate getDate() { 
-        return date; 
+    public LocalDate getDate() {
+        return date;
     }
 
-    public void setDate(LocalDate date) { 
-        this.date = date; 
+    public void setDate(LocalDate date) {
+        this.date = date;
     }
 
-    public String getType() { 
-        return type; 
+    public String getType() {
+        return type;
 
     }
 
-    public void setType(String type) { 
-        this.type = type; 
+    public void setType(String type) {
+        this.type = type;
     }
 
-    public BigDecimal getTransactionValue() { 
-        return transactionValue; 
+    public BigDecimal getTransactionValue() {
+        return transactionValue;
     }
 
-    public void setTransactionValue(BigDecimal transactionValue) { 
-        this.transactionValue = transactionValue; 
+    public void setTransactionValue(BigDecimal transactionValue) {
+        this.transactionValue = transactionValue;
     }
 
-    public BigDecimal getPurseValue() { 
-        return purseValue; 
+    public BigDecimal getPurseValue() {
+        return purseValue;
     }
 
-    public void setPurseValue(BigDecimal purseValue) { 
-        this.purseValue = purseValue; 
+    public void setPurseValue(BigDecimal purseValue) {
+        this.purseValue = purseValue;
     }
 
-    public Boolean getStatus() { 
-        return status; 
+    private String symbol;
+    private Integer quantity;
+    private BigDecimal price;
+
+    public String getSymbol() {
+        return symbol;
     }
 
-    public void setStatus(Boolean status) { 
-        this.status = status; 
+    public void setSymbol(String symbol) {
+        this.symbol = symbol;
+    }
+
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
+
+    public Boolean getStatus() {
+        return status;
+    }
+
+    public void setStatus(Boolean status) {
+        this.status = status;
     }
 }

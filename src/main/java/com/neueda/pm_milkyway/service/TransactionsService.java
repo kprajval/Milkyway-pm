@@ -55,7 +55,10 @@ public class TransactionsService {
         // 1. Update Transactions Table
         TransactionEntity tx = new TransactionEntity();
         tx.setDate(LocalDate.now());
-        tx.setType("BUY " + symbol); // Set as requested
+        tx.setType("BUY");
+        tx.setSymbol(symbol);
+        tx.setQuantity(quantity);
+        tx.setPrice(BigDecimal.valueOf(price));
         tx.setTransactionValue(BigDecimal.valueOf(totalCost));
         tx.setPurseValue(BigDecimal.valueOf(currentPurse - totalCost));
         tx.setStatus(true);
@@ -121,7 +124,10 @@ public class TransactionsService {
         // 2. Record Transaction
         TransactionEntity tx = new TransactionEntity();
         tx.setDate(LocalDate.now());
-        tx.setType("SELL " + symbol);
+        tx.setType("SELL");
+        tx.setSymbol(symbol);
+        tx.setQuantity(quantity);
+        tx.setPrice(BigDecimal.valueOf(price));
         tx.setTransactionValue(BigDecimal.valueOf(totalSaleValue));
         tx.setPurseValue(BigDecimal.valueOf(currentPurse + totalSaleValue)); // Add to purse
         tx.setStatus(true);
@@ -169,7 +175,10 @@ public class TransactionsService {
     private void saveTx(String symbol, String type, double price, double newPurse) {
         TransactionEntity tx = new TransactionEntity();
         tx.setDate(LocalDate.now());
-        tx.setType(type + " " + symbol);
+        tx.setType(type); // BUY or SELL
+        tx.setSymbol(symbol);
+        tx.setQuantity(1); // Adjustments are usually single unit or we'd need to change signature
+        tx.setPrice(BigDecimal.valueOf(price));
         tx.setTransactionValue(BigDecimal.valueOf(price));
         tx.setPurseValue(BigDecimal.valueOf(newPurse));
         tx.setStatus(true);
@@ -197,7 +206,8 @@ public class TransactionsService {
 
     @Transactional
     public void addToPurse(double amount) {
-        if (amount <= 0) throw new RuntimeException("Amount must be positive");
+        if (amount <= 0)
+            throw new RuntimeException("Amount must be positive");
         double currentPurse = getPurseValue();
         double newPurse = currentPurse + amount;
 
@@ -212,9 +222,11 @@ public class TransactionsService {
 
     @Transactional
     public void deductFromPurse(double amount) {
-        if (amount <= 0) throw new RuntimeException("Amount must be positive");
+        if (amount <= 0)
+            throw new RuntimeException("Amount must be positive");
         double currentPurse = getPurseValue();
-        if (currentPurse < amount) throw new RuntimeException("Insufficient purse balance");
+        if (currentPurse < amount)
+            throw new RuntimeException("Insufficient purse balance");
         double newPurse = currentPurse - amount;
 
         TransactionEntity tx = new TransactionEntity();
