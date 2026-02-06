@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction History | StockView</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root {
+            --bg: #0c0e12;
+            --surface: #151922;
+            --surface-elevated: #1c2129;
+            --border: #2a3142;
+            --text: #e8eaef;
+            --text-muted: #8b92a3;
+            --accent: #22d3ee;
+            --accent-dim: #0891b2;
+            --green: #34d399;
+            --red: #f87171;
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+        .container { display: flex; min-height: 100vh; }
+
+        .sidebar {
+            width: 260px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 28px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+        .sidebar-brand { font-size: 20px; font-weight: 700; padding: 0 14px 24px; color: var(--accent); display: flex; align-items: center; gap: 10px; letter-spacing: -0.02em; }
+        .sidebar a {
+            display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+            color: var(--text-muted); text-decoration: none; border-radius: 12px;
+            font-size: 15px; font-weight: 500; transition: 0.2s;
+        }
+        .sidebar a:hover { background: var(--surface-elevated); color: var(--text); }
+        .sidebar a.active { background: rgba(34, 211, 238, 0.12); color: var(--accent); }
+
+        .main { flex: 1; padding: 36px 40px; max-width: 1240px; margin: 0 auto; width: 100%; }
+        
+        .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
+        .page-title { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; color: var(--text); margin: 0; }
+        
+        .btn-generate {
+            background: var(--accent); color: var(--bg); border: none; padding: 12px 24px;
+            border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 15px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .btn-generate:hover { background: var(--accent-dim); transform: translateY(-2px); }
+        
+        .transaction-card { background: var(--surface); border-radius: 20px; border: 1px solid var(--border); padding: 28px; overflow-x: auto; }
+        .section-title { font-size: 20px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; color: var(--text); }
+
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        th { text-align: left; padding: 14px 16px; color: var(--text-muted); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--border); }
+        td { padding: 16px; border-bottom: 1px solid var(--border); font-size: 14px; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: var(--surface-elevated); }
+
+        .transaction-id { font-weight: 700; color: var(--accent); }
+        .type-buy { color: var(--green); font-weight: 600; }
+        .type-sell { color: var(--red); font-weight: 600; }
+        .status-success { color: var(--green); }
+        .status-failed { color: var(--red); }
+
+        @media (max-width: 1024px) {
+            .sidebar { display: none; }
+        }
+        
+        .portfolio-overview {
+            display: flex;
+            gap: 20px;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            margin-bottom: 28px;
+        }
+        .overview-item { flex: 1; min-width: 180px; }
+        .overview-item > span:first-child { font-size: 16px; color: var(--text-muted); display: block; margin-bottom: 4px; font-weight: 500; }
+        .overview-item .value { font-size: 42px; font-weight: 700; letter-spacing: -0.02em; display: inline; }
+        .overview-item .value span { display: inline; }
+        .overview-item .value.positive { color: var(--green); }
+        .overview-item .value.negative { color: var(--red); }
+        
+        @keyframes glowGreen {
+            0%, 100% { color: var(--accent); }
+            50% { color: var(--green); text-shadow: 0 0 8px var(--green); }
+        }
+
+        @keyframes glowRed {
+            0%, 100% { color: var(--accent); }
+            50% { color: var(--red); text-shadow: 0 0 8px var(--red); }
+        }
+        
+        .glow-green { animation: glowGreen 2s ease-in-out; }
+        .glow-red { animation: glowRed 2s ease-in-out; }
+        
+        @media print {
+            body { background: white; color: black; }
+            .sidebar, .btn-generate { display: none !important; }
+            .container { display: block; }
+            .main { padding: 40px; max-width: 100%; }
+            .transaction-card { background: white; border: none; padding: 0; }
+            .section-title { color: black; border-bottom: 2px solid #333; padding-bottom: 10px; }
+            table { border: 1px solid #333; }
+            th { background: #f0f0f0; color: #333; border: 1px solid #333; }
+            td { color: #333; border: 1px solid #ddd; }
+            .transaction-id { color: #0066cc; }
+            .type-buy { color: #00aa00; }
+            .type-sell { color: #cc0000; }
+            .status-success { color: #00aa00; }
+            .status-failed { color: #cc0000; }
+            .page-title { color: black; border-bottom: 3px solid #333; padding-bottom: 15px; margin-bottom: 30px; }
+            .header-section { display: block; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="sidebar">
+        <div class="sidebar-brand"><i class="fa fa-chart-line"></i> StockView</div>
+        <a th:href="@{/}"><i class="fa fa-wallet"></i> Dashboard</a>
+        <a th:href="@{/performance}"><i class="fa fa-chart-line"></i> Performance</a>
+        <a th:href="@{/market-lookup}"><i class="fa fa-search"></i> Market Lookup</a>
+        <a th:href="@{/transaction-history}" class="active"><i class="fa fa-receipt"></i> Transaction History</a>
+    </div>
+
+    <div class="main">
+        <div class="portfolio-overview">
+            <div class="overview-item">
+                <span>Total Purse</span>
+                <span class="value" style="color: var(--accent);">$<span id="stat-purse">--</span></span>
+            </div>
+            <div class="overview-item">
+                <span>Portfolio Value</span>
+                <span class="value positive">$<span id="stat-portfolio">--</span></span>
+            </div>
+            <div class="overview-item">
+                <span>Profit/Loss</span>
+                <span class="value" id="stat-pl-wrapper"><span id="stat-pl">--</span></span>
+            </div>
+            <div class="overview-item">
+                <span>Total Return</span>
+                <span class="value" id="stat-change-wrapper"><span id="stat-change">--</span>%</span>
+            </div>
+        </div>
+        <div class="header-section">
+            <h1 class="page-title">Transaction History</h1>
+            <button class="btn-generate" onclick="generatePDF()"><i class="fa fa-file-pdf"></i> Generate Report</button>
+        </div>
+
+        <div class="transaction-card">
+            <h2 class="section-title"><i class="fa fa-list"></i> All Transactions</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Transaction ID</th>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Value</th>
+                        <th>Purse</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="t : ${transactions}">
+                        <td><span class="transaction-id" th:text="${t.id}">1</span></td>
+                        <td th:text="${t.date}">2023-01-01</td>
+                        <td>
+                            <span th:class="${t.type == 'BUY' ? 'type-buy' : 'type-sell'}" th:text="${t.type}">BUY</span>
+                        </td>
+                        <td th:text="'$' + ${t.transactionValue}">$0.00</td>
+                        <td th:text="'$' + ${t.purseValue}">$0.00</td>
+                        <td>
+                            <span th:class="${t.status ? 'status-success' : 'status-failed'}" th:text="${t.status ? 'Success' : 'Failed'}">Status</span>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(transactions)}">
+                        <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">No transactions yet. Start trading to see your history here.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+function generatePDF() {
+    const table = document.querySelector('.transaction-card table');
+    const clone = table.cloneNode(true);
+    
+    // Create a plain container
+    const container = document.createElement('div');
+    container.style.cssText = 'background: white; padding: 20px; font-family: Arial, sans-serif;';
+    
+    // Add title
+    const title = document.createElement('h2');
+    title.textContent = 'Transaction History';
+    title.style.cssText = 'color: black; font-size: 24px; margin-bottom: 20px; font-weight: bold;';
+    container.appendChild(title);
+    
+    // Style the table plainly and force fixed layout so columns are rendered
+    clone.style.cssText = 'width: 100%; border-collapse: collapse; color: black; table-layout: fixed;';
+
+    // Style all cells and prevent wrapping so columns keep consistent width
+    const cells = clone.querySelectorAll('th, td');
+    cells.forEach(cell => {
+        cell.style.cssText = 'border: 1px solid #333; padding: 8px 10px; text-align: left; color: black; background: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;';
+    });
+    
+    // Style headers
+    const headers = clone.querySelectorAll('th');
+    headers.forEach(th => {
+        th.style.cssText = 'border: 1px solid #333; padding: 10px 15px; text-align: left; background: #f0f0f0; color: black; font-weight: bold;';
+    });
+    
+    container.appendChild(clone);
+    
+    // Use landscape orientation for wide tables so the last column isn't clipped
+    const opt = {
+        margin: [10, 10, 10, 10],
+        filename: 'StockView_Transaction_History.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, backgroundColor: '#ffffff' },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+    };
+    
+    html2pdf().set(opt).from(container).save();
+}
+
+async function loadDashboardStats() {
+    try {
+        const purseResp = await fetch('/api/purse-value');
+        const purseValue = await purseResp.json();
+        document.getElementById('stat-purse').innerText = purseValue.toFixed(2);
+        
+        const holdingsResp = await fetch('/api/dashboard/stats');
+        const stats = await holdingsResp.json();
+        
+        let totalPortfolioValue = 0;
+        let totalInvestment = 0;
+        
+        for (const holding of stats.holdings) {
+            const priceResp = await fetch(`http://localhost:3000/quote/${holding.stock}`);
+            const priceData = await priceResp.json();
+            if (priceData.price) {
+                const marketValue = priceData.price * holding.quantity;
+                totalPortfolioValue += marketValue;
+                totalInvestment += holding.total_invested;
+            }
+        }
+        
+        const totalPL = totalPortfolioValue - totalInvestment;
+        const totalPct = totalInvestment !== 0 ? (totalPL / totalInvestment) * 100 : 0;
+        
+        document.getElementById('stat-portfolio').innerText = totalPortfolioValue.toFixed(2);
+        document.getElementById('stat-pl').innerText = `$${totalPL.toFixed(2)}`;
+        const plWrapper = document.getElementById('stat-pl-wrapper');
+        plWrapper.className = totalPL >= 0 ? 'value positive' : 'value negative';
+        document.getElementById('stat-change').innerText = totalPct.toFixed(2);
+        const changeWrapper = document.getElementById('stat-change-wrapper');
+        changeWrapper.className = totalPct >= 0 ? 'value positive' : 'value negative';
+    } catch (e) {
+        console.error('Error loading dashboard stats:', e);
+    }
+}
+
+window.addEventListener('DOMContentLoaded', loadDashboardStats);
+</script>
+
+</body>
+</html>

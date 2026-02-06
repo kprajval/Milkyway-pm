@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard | StockView</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <style>
+        :root {
+            --bg: #0c0e12;
+            --surface: #151922;
+            --surface-elevated: #1c2129;
+            --border: #2a3142;
+            --text: #e8eaef;
+            --text-muted: #8b92a3;
+            --accent: #22d3ee;
+            --accent-dim: #0891b2;
+            --green: #34d399;
+            --red: #f87171;
+        }
+
+        @keyframes glowGreen {
+            0%, 100% { color: var(--accent); }
+            50% { color: var(--green); text-shadow: 0 0 8px var(--green); }
+        }
+
+        @keyframes glowRed {
+            0%, 100% { color: var(--accent); }
+            50% { color: var(--red); text-shadow: 0 0 8px var(--red); }
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            padding: 28px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+
+        .sidebar-brand {
+            font-size: 20px;
+            font-weight: 700;
+            padding: 0 14px 24px;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: -0.02em;
+        }
+
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+
+        .sidebar a:hover {
+            background: var(--surface-elevated);
+            color: var(--text);
+        }
+
+        .sidebar a.active {
+            background: rgba(34, 211, 238, 0.12);
+            color: var(--accent);
+        }
+
+        .main {
+            flex: 1;
+            padding: 36px 40px;
+            max-width: 1280px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text);
+        }
+
+        .portfolio-overview {
+            display: flex;
+            gap: 20px;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            margin-bottom: 28px;
+        }
+        .overview-item { flex: 1; min-width: 180px; }
+        .overview-item > span:first-child { font-size: 16px; color: var(--text-muted); display: block; margin-bottom: 6px; font-weight: 500; }
+        .overview-item .value { font-size: 42px; font-weight: 700; letter-spacing: -0.02em; display: inline; }
+        .overview-item .value span { display: inline; }
+        .overview-item .value.positive { color: var(--green); }
+        .overview-item .value.negative { color: var(--red); }
+        .overview-item .value.glow-green { animation: glowGreen 2s ease-in-out; }
+        .overview-item .value.glow-red { animation: glowRed 2s ease-in-out; }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 340px 1fr;
+            gap: 24px;
+            margin-bottom: 28px;
+        }
+
+        .card {
+            background: var(--surface);
+            padding: 24px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            border-color: rgba(34, 211, 238, 0.3);
+        }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text);
+            letter-spacing: -0.01em;
+        }
+
+        .chart-wrap {
+            width: 100%;
+            height: 240px;
+            position: relative;
+        }
+
+        .holdings-card {
+            width: 100%;
+            margin-bottom: 24px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+        }
+
+        th {
+            text-align: left;
+            padding: 14px 16px;
+            color: var(--text-muted);
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: var(--surface-elevated);
+        }
+
+        .symbol {
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .pl-positive {
+            color: var(--green);
+            font-weight: 600;
+        }
+
+        .pl-negative {
+            color: var(--red);
+            font-weight: 600;
+        }
+
+        button {
+            background: var(--accent);
+            color: var(--bg);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+            font-size: 13px;
+        }
+
+        button:hover {
+            background: var(--accent-dim);
+            transform: translateY(-2px);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: var(--surface);
+            padding: 32px;
+            border-radius: 24px;
+            width: 700px;
+            max-height: 520px;
+            border: 1px solid var(--border);
+        }
+
+        @keyframes modalSlideUp {
+            from {
+                transform: translateY(40px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-content h3 {
+            margin: 0 0 20px 0;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .btn-cancel {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 15px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .btn-cancel:hover {
+            background: #5a6268;
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar {
+                display: none;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .main {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="sidebar">
+            <div class="sidebar-brand"><i class="fa fa-chart-line"></i> StockView</div>
+            <a th:href="@{/}" class="active">
+                <i class="fa fa-wallet"></i> Dashboard
+            </a>
+            <a th:href="@{/performance}">
+                <i class="fa fa-chart-line"></i> Performance
+            </a>
+            <a th:href="@{/market-lookup}">
+                <i class="fa fa-search"></i> Market Lookup
+            </a>
+            <a th:href="@{/transaction-history}">
+                <i class="fa fa-history"></i> Transaction History
+            </a>
+        </div>
+
+        <div class="main">
+            <div class="top-bar">
+                <h1 class="page-title">Dashboard</h1>
+            </div>
+
+            <div class="portfolio-overview">
+                <div class="overview-item">
+                    <span>Total Purse</span>
+                    <span class="value" style="color: var(--accent);">$<span id="stat-purse">--</span></span>
+                </div>
+                <div class="overview-item">
+                    <span>Portfolio Value</span>
+                    <span class="value positive">$<span id="stat-portfolio">--</span></span>
+                </div>
+                <div class="overview-item">
+                    <span>Profit/Loss</span>
+                    <span class="value" id="stat-pl-wrapper"><span id="stat-pl">--</span></span>
+                </div>
+                <div class="overview-item">
+                    <span>Total Return</span>
+                    <span class="value" id="stat-change-wrapper"><span id="stat-change">--</span>%</span>
+                </div>
+            </div>
+
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:18px;">
+                <input id="purse-amount" type="number" step="0.01" placeholder="Amount" style="padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);width:160px;">
+                <button onclick="addPurse()">Add Purse</button>
+                <button onclick="deductPurse()" style="background:#f87171;color:var(--bg);">Deduct Purse</button>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="card">
+                    <div class="card-title">Asset Allocation</div>
+                    <div class="chart-wrap">
+                        <canvas id="allocationChart"></canvas>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Cumulative Performance (30 Days)</div>
+                    <div class="chart-wrap">
+                        <canvas id="cumulativeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card holdings-card">
+                <div class="card-title">Current Holdings</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Stock</th>
+                            <th>Quantity</th>
+                            <th>Current Price</th>
+                            <th>Invested</th>
+                            <th>Market Value</th>
+                            <th>P/L</th>
+                            <th>Change %</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="item : ${holdings}" class="stock-row" th:data-stock="${item.stock}">
+                            <td><span class="symbol" th:text="${item.stock}">Stock</span></td>
+                            <td class="qty" th:text="${item.quantity}">0</td>
+                            <td class="current-price">Loading...</td>
+                            <td class="investment-value" th:text="'$' + ${item.total_invested}">$0.00</td>
+                            <td class="market-value">--</td>
+                            <td class="profit-loss">--</td>
+                            <td class="pct-change">--</td>
+                            <td>
+                                <button th:onclick="showGraph([[${item.stock}]])"><i class="fa fa-chart-area"></i>
+                                    Graph</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="graphModal" class="modal">
+        <div class="modal-content">
+            <h3 id="graphTitle">Stock History</h3>
+            <canvas id="stockChart" style="height: 300px;"></canvas>
+            <button class="btn-cancel" onclick="closeGraph()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        let myChart = null;
+        let allocationChart = null;
+        let cumulativeChart = null;
+
+        Chart.defaults.color = '#8b92a3';
+        Chart.defaults.borderColor = '#2a3142';
+        Chart.defaults.font.family = "'DM Sans', sans-serif";
+
+        async function initDashboard() {
+            const rows = document.querySelectorAll('.stock-row');
+            let totalPortfolioValue = 0;
+            let totalInvestment = 0;
+
+            const labels = [];
+            const marketValues = [];
+
+            // 1. Fetch Purse Value (Spring Boot API)
+            try {
+                const purseResp = await fetch('/api/purse-value');
+                const purseValue = await purseResp.json();
+                document.getElementById('stat-purse').innerText = purseValue.toFixed(2);
+            } catch (e) { console.error("Purse fetch error", e); }
+
+            // 2. Process Holdings and Fetch Prices (Python Proxy)
+            for (const row of rows) {
+                const stockCode = row.getAttribute('data-stock');
+                try {
+                    const response = await fetch(`http://localhost:3000/quote/${stockCode}`);
+                    const data = await response.json();
+
+                    if (data.price) {
+                        const qty = parseFloat(row.querySelector('.qty').innerText) || 0;
+                        const investVal = parseFloat(row.querySelector('.investment-value').innerText.replace('$', '')) || 0;
+                        const marketValue = data.price * qty;
+                        const profitLoss = marketValue - investVal;
+                        const pctChange = investVal !== 0 ? ((profitLoss / investVal) * 100) : 0;
+
+                        // Update Table
+                        row.querySelector('.current-price').innerText = `$${data.price.toFixed(2)}`;
+                        row.querySelector('.market-value').innerText = `$${marketValue.toFixed(2)}`;
+                        row.querySelector('.profit-loss').innerText = `$${profitLoss.toFixed(2)}`;
+                        row.querySelector('.profit-loss').className = profitLoss >= 0 ? 'profit-loss pl-positive' : 'profit-loss pl-negative';
+                        row.querySelector('.pct-change').innerText = `${pctChange.toFixed(2)}%`;
+
+                        // Aggregate Totals
+                        totalPortfolioValue += marketValue;
+                        totalInvestment += investVal;
+
+                        // Prepare Chart Data
+                        labels.push(stockCode);
+                        marketValues.push(marketValue);
+                    }
+                } catch (e) { console.error("Error fetching", stockCode); }
+            }
+
+        // 3. Update Summary Stats
+        const totalPL = totalPortfolioValue - totalInvestment;
+        const totalPct = totalInvestment !== 0 ? (totalPL / totalInvestment) * 100 : 0;
+        
+        document.getElementById('stat-portfolio').innerText = totalPortfolioValue.toFixed(2);
+        document.getElementById('stat-pl').innerText = `$${totalPL.toFixed(2)}`;
+        const plWrapper = document.getElementById('stat-pl-wrapper');
+        plWrapper.className = totalPL >= 0 ? 'value positive' : 'value negative';
+        document.getElementById('stat-change').innerText = totalPct.toFixed(2);
+        const changeWrapper = document.getElementById('stat-change-wrapper');
+        changeWrapper.className = totalPct >= 0 ? 'positive' : 'negative';
+        const changePercent = document.getElementById('stat-change-percent');
+        if (changePercent) changePercent.className = totalPct >= 0 ? 'positive' : 'negative';
+
+            // 4. Render Donut Chart
+            renderDonutChart(labels, marketValues);
+            
+            // 5. Render Cumulative Performance Chart
+            await renderCumulativeChart(rows);
+        }
+
+        async function addPurse() {
+            const el = document.getElementById('purse-amount');
+            const amt = parseFloat(el.value);
+            if (!amt || amt <= 0) { alert('Enter a positive amount'); return; }
+
+            try {
+                const res = await fetch(`/api/purse/add?amount=${encodeURIComponent(amt)}`, { method: 'POST' });
+                if (res.ok) {
+                    el.value = '';
+                    // Add green glow animation
+                    const purseValue = document.querySelector('#stat-purse').parentElement;
+                    purseValue.classList.remove('glow-green', 'glow-red');
+                    void purseValue.offsetWidth; // Force reflow
+                    purseValue.classList.add('glow-green');
+                    setTimeout(() => purseValue.classList.remove('glow-green'), 2000);
+                    initDashboard();
+                } else {
+                    const txt = await res.text();
+                    alert('Error: ' + txt);
+                }
+            } catch (e) { console.error(e); alert('Request failed'); }
+        }
+
+        async function deductPurse() {
+            const el = document.getElementById('purse-amount');
+            const amt = parseFloat(el.value);
+            if (!amt || amt <= 0) { alert('Enter a positive amount'); return; }
+
+            try {
+                const res = await fetch(`/api/purse/deduct?amount=${encodeURIComponent(amt)}`, { method: 'POST' });
+                if (res.ok) {
+                    el.value = '';
+                    // Add red glow animation
+                    const purseValue = document.querySelector('#stat-purse').parentElement;
+                    purseValue.classList.remove('glow-green', 'glow-red');
+                    void purseValue.offsetWidth; // Force reflow
+                    purseValue.classList.add('glow-red');
+                    setTimeout(() => purseValue.classList.remove('glow-red'), 2000);
+                    initDashboard();
+                } else {
+                    const txt = await res.text();
+                    alert('Error: ' + txt);
+                }
+            } catch (e) { console.error(e); alert('Request failed'); }
+        }
+
+        function renderDonutChart(labels, data) {
+            const ctx = document.getElementById('allocationChart').getContext('2d');
+            // destroy previous instance if present to avoid Chart.js errors
+            if (allocationChart) {
+                try { allocationChart.destroy(); } catch (e) { /* ignore */ }
+            }
+
+            // handle empty data sets gracefully
+            let chartLabels = labels && labels.length ? labels : ['No Holdings'];
+            let chartData = data && data.length ? data : [1];
+            let bgColors = [
+                '#22d3ee', '#34d399', '#f59e0b', '#f87171', '#a78bfa', '#fb923c'
+            ];
+
+            allocationChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: chartLabels,
+                    datasets: [{
+                        data: chartData,
+                        backgroundColor: bgColors,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '68%',
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        async function renderCumulativeChart(rows) {
+            const ctx = document.getElementById('cumulativeChart').getContext('2d');
+            
+            // Destroy previous chart instance
+            if (cumulativeChart) {
+                try { cumulativeChart.destroy(); } catch (e) { /* ignore */ }
+            }
+
+            // Fetch historical data for all stocks
+            const datasets = [];
+            const colors = ['#22d3ee', '#34d399', '#f59e0b', '#f87171', '#a78bfa', '#fb923c'];
+            let sharedLabels = null;
+
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                const stockCode = row.getAttribute('data-stock');
+                
+                try {
+                    const response = await fetch(`http://localhost:3000/history/${stockCode}`);
+                    const data = await response.json();
+                    
+                    if (data.labels && data.prices) {
+                        if (!sharedLabels) sharedLabels = data.labels;
+                        
+                        datasets.push({
+                            label: stockCode,
+                            data: data.prices,
+                            borderColor: colors[i % colors.length],
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            pointHoverRadius: 4,
+                            tension: 0.35,
+                            fill: false
+                        });
+                    }
+                } catch (e) {
+                    console.error(`Error fetching history for ${stockCode}:`, e);
+                }
+            }
+
+            // Handle case with no data
+            if (datasets.length === 0) {
+                sharedLabels = ['No Data'];
+                datasets.push({
+                    label: 'No Holdings',
+                    data: [0],
+                    borderColor: '#8b92a3',
+                    backgroundColor: 'transparent'
+                });
+            }
+
+            cumulativeChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: sharedLabels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'nearest',
+                        intersect: false,
+                        axis: 'x'
+                    },
+                    scales: {
+                        x: { 
+                            grid: { display: false },
+                            ticks: { maxTicksLimit: 8 }
+                        },
+                        y: { 
+                            grid: { color: 'rgba(42, 49, 66, 0.6)' },
+                            beginAtZero: false
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 10,
+                                font: { size: 11 }
+                            },
+                            onClick: (e, legendItem, legend) => {
+                                const index = legendItem.datasetIndex;
+                                const ci = legend.chart;
+                                const meta = ci.getDatasetMeta(index);
+                                
+                                // Toggle dataset visibility
+                                meta.hidden = meta.hidden === null ? !ci.data.datasets[index].hidden : null;
+                                ci.update();
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': $' + context.parsed.y.toFixed(2);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        async function showGraph(symbol) {
+            document.getElementById('graphModal').style.display = 'flex';
+            document.getElementById('graphTitle').innerText = symbol + " - 30 Day History";
+            const response = await fetch(`http://localhost:3000/history/${symbol}`);
+            const data = await response.json();
+            const ctx = document.getElementById('stockChart').getContext('2d');
+            if (myChart) { myChart.destroy(); }
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Price ($)',
+                        data: data.prices,
+                        borderColor: '#22d3ee',
+                        backgroundColor: 'rgba(34, 211, 238, 0.08)',
+                        fill: true,
+                        tension: 0.35,
+                        pointRadius: 0,
+                        pointHoverRadius: 6,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { display: false } },
+                        y: { grid: { color: 'rgba(42, 49, 66, 0.6)' } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function closeGraph() {
+            document.getElementById('graphModal').style.display = 'none';
+        }
+
+        window.onclick = function (event) {
+            if (event.target === document.getElementById('graphModal')) closeGraph();
+        };
+        function closeGraph() {
+            document.getElementById('graphModal').style.display = 'none';
+        }
+
+        // --- Chatbot Integration ---
+        const chatWidgetHTML = `
+            <div id="chat-widget" style="position: fixed; bottom: 20px; right: 20px; z-index: 2000; font-family: sans-serif;">
+                <button id="chat-toggle-btn" style="width: 60px; height: 60px; border-radius: 50%; background: #007bff; color: white; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2); cursor: pointer; font-size: 24px;">💬</button>
+                <div id="chat-window" style="display: none; position: absolute; bottom: 80px; right: 0; width: 350px; height: 500px; background: white; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); flex-direction: column; overflow: hidden; border: 1px solid #ddd;">
+                    <div style="background: #007bff; color: white; padding: 15px; font-weight: bold; display: flex; justify-content: space-between;">
+                        <span>AI Assistant</span><span id="chat-close" style="cursor: pointer;">&times;</span>
+                    </div>
+                    <div id="chat-messages" style="flex: 1; padding: 15px; overflow-y: auto; background: #f9f9f9; display: flex; flex-direction: column; gap: 10px;">
+                        <div style="align-self: flex-start; background: #e9ecef; padding: 8px 12px; border-radius: 15px; border-bottom-left-radius: 2px; max-width: 80%;">Hello! Ask me about any stock.</div>
+                    </div>
+                    <div style="padding: 10px; border-top: 1px solid #eee; display: flex; gap: 5px; background: white;">
+                        <input type="text" id="chat-input" placeholder="Type a message..." style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 20px; outline: none;">
+                        <button id="chat-send" style="background: #007bff; color: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer;">Send</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', chatWidgetHTML);
+
+        // Chat Logic
+        const chatToggle = document.getElementById('chat-toggle-btn');
+        const chatWindow = document.getElementById('chat-window');
+        const chatClose = document.getElementById('chat-close');
+        const chatInput = document.getElementById('chat-input');
+        const chatSend = document.getElementById('chat-send');
+        const chatMessages = document.getElementById('chat-messages');
+
+        chatToggle.onclick = () => {
+            const isHidden = chatWindow.style.display === 'none';
+            chatWindow.style.display = isHidden ? 'flex' : 'none';
+            if (isHidden) setTimeout(() => chatInput.focus(), 100);
+        };
+        chatClose.onclick = () => chatWindow.style.display = 'none';
+
+        // Simple memory: Array of objects { role: 'user'|'model', content: 'text' }
+        let chatHistory = [];
+
+        async function sendMessage() {
+            const text = chatInput.value.trim();
+            if (!text) return;
+
+            appendMessage(text, 'user');
+            chatInput.value = '';
+            const loadingId = appendMessage("Thinking...", 'bot', true);
+
+            // Limited history (last 6 messages = 3 turns)
+            const recentHistory = chatHistory.slice(-6);
+
+            const portfolioContext = {
+                purse: document.getElementById('stat-purse').innerText,
+                totalValue: document.getElementById('stat-portfolio').innerText,
+                holdings: Array.from(document.querySelectorAll('.stock-row')).map(r => ({
+                    symbol: r.getAttribute('data-stock'),
+                    qty: r.querySelector('.qty').innerText
+                }))
+            };
+
+            try {
+                const res = await fetch('http://localhost:3000/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: text,
+                        context: JSON.stringify(portfolioContext),
+                        history: recentHistory
+                    })
+                });
+                const data = await res.json();
+                document.getElementById(loadingId).remove();
+
+                if (data.type === 'action') {
+                    handleChatAction(data);
+                } else {
+                    appendMessage(data.response, 'bot');
+                }
+            } catch (err) {
+                document.getElementById(loadingId).remove();
+                appendMessage("Error connecting to server.", 'bot');
+                console.error(err);
+            }
+        }
+
+        async function handleChatAction(data) {
+            appendMessage(data.message, 'bot');
+
+            if (data.action === 'buy' || data.action === 'sell') {
+                const symbol = data.data.symbol;
+                const quantity = data.data.quantity;
+
+                try {
+                    const priceRes = await fetch(`http://localhost:3000/quote/${symbol}`);
+                    const priceData = await priceRes.json();
+
+                    if (!priceData.price) throw new Error("Could not fetch price");
+                    const price = priceData.price;
+
+                    let url;
+                    if (data.action === 'buy') {
+                        url = `/api/transactions/buy?symbol=${symbol}&quantity=${quantity}&price=${price}`;
+                    } else {
+                        // NOW USING THE NEW SELL ENDPOINT
+                        url = `/api/transactions/sell?symbol=${symbol}&quantity=${quantity}&price=${price}`;
+                    }
+
+                    const res = await fetch(url, { method: 'POST' });
+                    const text = await res.text();
+
+                    if (res.ok) {
+                        appendMessage(`✅ Successfully ${data.action === 'buy' ? 'bought' : 'sold'} ${quantity} ${symbol} at $${price.toFixed(2)}`, 'bot');
+
+                        // Clear history or update it? Maybe adding a system note?
+                        // For now, simpler is better.
+                        initDashboard();
+                    } else {
+                        appendMessage(`❌ Failed: ${text}`, 'bot');
+                    }
+
+                } catch (e) {
+                    appendMessage("❌ Error executing transaction.", 'bot');
+                }
+            }
+
+            if (data.action === 'get_portfolio') {
+                try {
+                    const resp = await fetch('/api/dashboard/stats');
+                    const stats = await resp.json();
+                    let msg = "Here is your portfolio:<br>";
+                    if (stats.holdings.length === 0) msg += "You have no stocks yet.";
+                    stats.holdings.forEach(h => {
+                        msg += `<b>${h.stock}</b>: ${h.quantity} shares<br>`;
+                    });
+                    msg += `<br><b>Purse:</b> $${stats.purse.toFixed(2)}`;
+                    appendMessage(msg, 'bot');
+                } catch (e) {
+                    appendMessage("Could not fetch portfolio.", 'bot');
+                }
+            }
+        }
+
+        chatSend.onclick = sendMessage;
+        chatInput.onkeypress = (e) => { if (e.key === 'Enter') sendMessage(); };
+
+        function appendMessage(text, sender, isLoading = false) {
+            const div = document.createElement('div');
+            div.style.cssText = `align-self: ${sender === 'user' ? 'flex-end' : 'flex-start'}; background: ${sender === 'user' ? '#007bff' : '#e9ecef'}; color: ${sender === 'user' ? 'white' : '#333'}; padding: 8px 12px; border-radius: 15px; border-${sender === 'user' ? 'bottom-right' : 'bottom-left'}-radius: 2px; max-width: 80%; word-wrap: break-word;`;
+            div.innerHTML = text;
+            if (isLoading) { div.id = 'loading-' + Date.now(); div.style.color = '#777'; div.style.fontStyle = 'italic'; }
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            // Update History logic
+            if (!isLoading) {
+                // Map 'bot' to 'model' for Gemini
+                const role = sender === 'user' ? 'user' : 'model';
+                chatHistory.push({ role: role, content: div.innerText }); // Store plain text for history
+            }
+            return div.id;
+        }
+
+        document.addEventListener('DOMContentLoaded', initDashboard);
+    </script>
+</body>
+
+</html>
