@@ -165,8 +165,23 @@ def get_news_summary(symbol: str):
     """Get top 3 news headlines for a stock."""
     try:
         stock = yf.Ticker(symbol)
-        news = stock.news[:3]
-        return [{"title": n['title'], "url": n['link']} for n in news]
+        news = stock.news
+        results = []
+        for n in news[:3]:
+            # Try robust extraction similar to get_news endpoint
+            # Handling yfinance structure variations
+            title = n.get('title')
+            url = n.get('link')
+            
+            # If nested in content (some versions)
+            if not title and 'content' in n:
+                c = n.get('content', {})
+                title = c.get('title')
+                url = c.get('canonicalUrl', {}).get('url')
+            
+            if title:
+                results.append({"title": title, "url": url})
+        return results
     except:
         return []
 
@@ -199,31 +214,44 @@ def chat_bot():
     data = request.json
     user_msg = data.get('message', '')
     portfolio_context = data.get('context', {}) 
+    # History passed from frontend (list of {role: 'user'|'model', parts: 'text'})
+    chat_history = data.get('history', [])
     
     if not user_msg:
         return jsonify({"response": "Please say something!"})
 
     system_instruction = f"""
     You are an intelligent Portfolio Manager Assistant.
-    Your capabilities:
-    1. Answer questions about stocks using your knowledge.
-    2. Use tools to 'Buy' or 'Sell' stocks when explicitly asked.
-    3. Use 'get_news_summary' to fetch latest news if asked.
-    4. Use 'get_portfolio' if the user asks "what do I own" or "show my stocks", unless context is provided.
     
     Current Portfolio Context: {portfolio_context}
     
-    CRITICAL:
-    - If user asks to buy/sell, CALL THE TOOL.
-    - If user asks for news, CALL THE TOOL.
+    CAPABILITIES:
+    1. **Trading**: Use `buy_stock` or `sell_stock` when the user explicitly asks.
+    2. **News**: Use `get_news_summary` INSTANTLY if the user asks for "news", "headlines", or "updates" on a stock.
+    3. **Portfolio**: Use `get_portfolio` if asked "what do I own".
+    
+    RULES:
+    - If asked for news, DO NOT ask "Would you like me to get it?". JUST CALL THE TOOL.
+    - Keep responses concise.
     """
 
     try:
         # Pass functions directly to tools
-        model = genai.GenerativeModel('gemini-2.5-flash', tools=my_tools)
-        chat = model.start_chat()
+        model = genai.GenerativeModel('gemini-2.5-flash', tools=my_tools, system_instruction=system_instruction)
         
-        response = chat.send_message(f"{system_instruction}\n\nUser: {user_msg}")
+        # Initialize chat with history
+        # We need to convert the frontend history format to Gemini's expected Content objects if providing proper history
+        # OR, simpler for this "REST" style: Append history to the prompt text or use start_chat(history=...)
+        # Let's try start_chat(history=...)
+        
+        formatted_history = []
+        for msg in chat_history:
+            role = "user" if msg['role'] == "user" else "model"
+            formatted_history.append({"role": role, "parts": [msg['content']]})
+
+        chat = model.start_chat(history=formatted_history)
+        
+        response = chat.send_message(user_msg)
         
         part = response.parts[0]
         

@@ -361,6 +361,77 @@
                 padding: 20px;
             }
         }
+
+        /* ============================================
+           EXPERIMENTAL: Language Toggle Styles
+           Can be safely removed
+           ============================================ */
+        .language-selector {
+            position: relative;
+            display: inline-block;
+        }
+
+        .lang-toggle-btn {
+            background: var(--surface-elevated);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .lang-toggle-btn:hover {
+            background: var(--border);
+            border-color: var(--accent);
+        }
+
+        .language-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: var(--surface-elevated);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px;
+            min-width: 150px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 1000;
+        }
+
+        .language-dropdown.show {
+            display: block;
+        }
+
+        .lang-option {
+            background: transparent;
+            border: none;
+            color: var(--text);
+            padding: 10px 14px;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .lang-option:hover {
+            background: var(--surface);
+        }
+
+        .lang-option.active {
+            background: var(--accent);
+            color: var(--bg);
+            font-weight: 600;
+        }
+
+        /* ============================================ */
     </style>
 </head>
 
@@ -385,24 +456,35 @@
 
         <div class="main">
             <div class="top-bar">
-                <h1 class="page-title">Dashboard</h1>
+                <h1 class="page-title" data-i18n="dashboard.title">Dashboard</h1>
+                <div class="language-selector">
+                    <button class="lang-toggle-btn" onclick="languageToggle.toggleDropdown()">
+                        <i class="fa fa-globe"></i> <span id="current-lang-label">English</span> <i
+                            class="fa fa-chevron-down"></i>
+                    </button>
+                    <div class="language-dropdown" id="lang-dropdown">
+                        <button class="lang-option" onclick="languageToggle.setLanguage('en')">English</button>
+                        <button class="lang-option" onclick="languageToggle.setLanguage('hi')">हिंदी (Hindi)</button>
+                        <button class="lang-option" onclick="languageToggle.setLanguage('ta')">தமிழ் (Tamil)</button>
+                    </div>
+                </div>
             </div>
 
             <div class="portfolio-overview">
                 <div class="overview-item">
-                    <span>Total Purse</span>
+                    <span data-i18n="dashboard.total_purse">Total Purse</span>
                     <span class="value" style="color: var(--accent);">$<span id="stat-purse">--</span></span>
                 </div>
                 <div class="overview-item">
-                    <span>Portfolio Value</span>
+                    <span data-i18n="dashboard.portfolio_value">Portfolio Value</span>
                     <span class="value positive">$<span id="stat-portfolio">--</span></span>
                 </div>
                 <div class="overview-item">
-                    <span>Profit/Loss</span>
+                    <span data-i18n="dashboard.profit_loss">Profit/Loss</span>
                     <span class="value" id="stat-pl-wrapper"><span id="stat-pl">--</span></span>
                 </div>
                 <div class="overview-item">
-                    <span>Total Return</span>
+                    <span data-i18n="dashboard.total_return">Total Return</span>
                     <span class="value" id="stat-change-wrapper"><span id="stat-change">--</span>%</span>
                 </div>
             </div>
@@ -416,13 +498,14 @@
 
             <div class="dashboard-grid">
                 <div class="card">
-                    <div class="card-title">Asset Allocation</div>
+                    <div class="card-title" data-i18n="dashboard.asset_allocation">Asset Allocation</div>
                     <div class="chart-wrap">
                         <canvas id="allocationChart"></canvas>
                     </div>
                 </div>
                 <div class="card">
-                    <div class="card-title">Cumulative Performance (30 Days)</div>
+                    <div class="card-title" data-i18n="dashboard.cumulative_performance">Cumulative Performance (30
+                        Days)</div>
                     <div class="chart-wrap">
                         <canvas id="cumulativeChart"></canvas>
                     </div>
@@ -430,18 +513,18 @@
             </div>
 
             <div class="card holdings-card">
-                <div class="card-title">Current Holdings</div>
+                <div class="card-title" data-i18n="dashboard.current_holdings">Current Holdings</div>
                 <table>
                     <thead>
                         <tr>
-                            <th>Stock</th>
-                            <th>Quantity</th>
-                            <th>Current Price</th>
-                            <th>Invested</th>
-                            <th>Market Value</th>
-                            <th>P/L</th>
-                            <th>Change %</th>
-                            <th>Actions</th>
+                            <th data-i18n="dashboard.stock">Stock</th>
+                            <th data-i18n="dashboard.quantity">Quantity</th>
+                            <th data-i18n="dashboard.current_price">Current Price</th>
+                            <th data-i18n="dashboard.invested">Invested</th>
+                            <th data-i18n="dashboard.market_value">Market Value</th>
+                            <th data-i18n="dashboard.pl">P/L</th>
+                            <th data-i18n="dashboard.change_percent">Change %</th>
+                            <th data-i18n="dashboard.actions">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="holdings-body">
@@ -454,9 +537,9 @@
 
     <div id="graphModal" class="modal">
         <div class="modal-content">
-            <h3 id="graphTitle">Stock History</h3>
+            <h3 id="graphTitle" data-i18n="dashboard.stock_history">Stock History</h3>
             <canvas id="stockChart" style="height: 300px;"></canvas>
-            <button class="btn-cancel" onclick="closeGraph()">Close</button>
+            <button class="btn-cancel" onclick="closeGraph()" data-i18n="common.close">Close</button>
         </div>
     </div>
 
@@ -810,7 +893,7 @@
                     </div>
                     <div style="padding: 10px; border-top: 1px solid #eee; display: flex; gap: 5px; background: white;">
                         <input type="text" id="chat-input" placeholder="Type a message..." style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 20px; outline: none;">
-                        <button id="chat-send" style="background: #007bff; color: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer;">Send</button>
+                        <button id="chat-send" style="background: #007bff; color: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer;" data-i18n="common.send">Send</button>
                     </div>
                 </div>
             </div>
@@ -896,10 +979,10 @@
 
                     let url;
                     if (data.action === 'buy') {
-                        url = `/api/transactions/buy?symbol=${symbol}&quantity=${quantity}&price=${price}`;
+                        url = `${BACKEND_URL}/transactions/buy?symbol=${symbol}&quantity=${quantity}&price=${price}`;
                     } else {
                         // NOW USING THE NEW SELL ENDPOINT
-                        url = `/api/transactions/sell?symbol=${symbol}&quantity=${quantity}&price=${price}`;
+                        url = `${BACKEND_URL}/transactions/sell?symbol=${symbol}&quantity=${quantity}&price=${price}`;
                     }
 
                     const res = await fetch(url, { method: 'POST' });
@@ -922,7 +1005,7 @@
 
             if (data.action === 'get_portfolio') {
                 try {
-                    const resp = await fetch('/api/dashboard/stats');
+                    const resp = await fetch(`${BACKEND_URL}/dashboard/stats`);
                     const stats = await resp.json();
                     let msg = "Here is your portfolio:<br>";
                     if (stats.holdings.length === 0) msg += "You have no stocks yet.";
@@ -959,6 +1042,8 @@
 
         document.addEventListener('DOMContentLoaded', initDashboard);
     </script>
+
+    <script>const languageToggle = { currentLanguage: 'en', translations: { en: { "nav.dashboard": "Dashboard", "nav.performance": "Performance", "nav.market_lookup": "Market Lookup", "nav.transaction_history": "Transaction History", "dashboard.title": "Dashboard", "dashboard.total_purse": "Total Purse", "dashboard.portfolio_value": "Portfolio Value", "dashboard.profit_loss": "Profit/Loss", "dashboard.total_return": "Total Return" }, hi: { "nav.dashboard": "डैशबोर्ड", "nav.performance": "प्रदर्शन", "nav.market_lookup": "बाज़ार खोज", "nav.transaction_history": "लेनदेन इतिहास", "dashboard.title": "डैशबोर्ड", "dashboard.total_purse": "कुल पर्स", "dashboard.portfolio_value": "पोर्टफोलियो मूल्य", "dashboard.profit_loss": "लाभ/हानि", "dashboard.total_return": "कुल रिटर्न" }, ta: { "nav.dashboard": "டாஷ்போர்டு", "nav.performance": "செயல்திறன்", "nav.market_lookup": "சந்தை தேடல்", "nav.transaction_history": "பரிவர்த்தனை வரலாறு", "dashboard.title": "டாஷ்போர்டு", "dashboard.total_purse": "மொத்த பை", "dashboard.portfolio_value": "போர்ட்ஃபோலியோ மதிப்பு", "dashboard.profit_loss": "லாபம்/நஷ்டம்", "dashboard.total_return": "மொத்த வருவாய்" } }, toggleDropdown: function () { const d = document.getElementById('lang-dropdown'); if (d) d.classList.toggle('show') }, setLanguage: function (lang) { this.currentLanguage = lang; this.applyLanguage(lang); const d = document.getElementById('lang-dropdown'); if (d) d.classList.remove('show'); const labels = { 'en': 'English', 'hi': 'हिंदी', 'ta': 'தமிழ்' }; const l = document.getElementById('current-lang-label'); if (l) l.innerText = labels[lang] }, applyLanguage: function (lang) { const t = this.translations[lang]; if (!t) return; document.querySelectorAll('[data-i18n]').forEach(el => { const key = el.getAttribute('data-i18n'); if (t[key]) { if (el.tagName === 'INPUT' && el.hasAttribute('placeholder')) el.placeholder = t[key]; else el.innerText = t[key] } }) }, init: function () { document.addEventListener('click', (e) => { if (!e.target.closest('.language-selector')) { const d = document.getElementById('lang-dropdown'); if (d) d.classList.remove('show') } }) } }; if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => languageToggle.init()); else languageToggle.init();</script>
 </body>
 
 </html>

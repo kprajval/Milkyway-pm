@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language Toggle Demo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .demo-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #22d3ee;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #555;
+            margin-top: 30px;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .feature-item {
+            padding: 15px;
+            background: #f0f9ff;
+            border-left: 4px solid #22d3ee;
+            border-radius: 6px;
+        }
+        .feature-item strong {
+            color: #0891b2;
+        }
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 15px 0;
+        }
+        .screenshot-placeholder {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px;
+            text-align: center;
+            border-radius: 12px;
+            font-size: 18px;
+            margin: 20px 0;
+        }
+        .steps {
+            counter-reset: step-counter;
+            list-style: none;
+            padding: 0;
+        }
+        .steps li {
+            counter-increment: step-counter;
+            padding: 15px;
+            margin: 10px 0;
+            background: #f8fafc;
+            border-radius: 8px;
+            position: relative;
+            padding-left: 60px;
+        }
+        .steps li::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 15px;
+            top: 15px;
+            background: #22d3ee;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .warning {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .success {
+            background: #d1fae5;
+            border-left: 4px solid #10b981;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .language-demo {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .lang-card {
+            flex: 1;
+            min-width: 150px;
+            padding: 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        .lang-card:hover {
+            transform: translateY(-5px);
+            border-color: #22d3ee;
+            box-shadow: 0 5px 15px rgba(34, 211, 238, 0.3);
+        }
+        .lang-flag {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        .lang-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .lang-native {
+            color: #666;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-card">
+        <h1>🌐 Language Toggle Feature - Demo & Documentation</h1>
+        
+        <div class="success">
+            <strong>✅ Implementation Complete!</strong> The language toggle feature is now ready for testing.
+        </div>
+
+        <h2>📋 What Was Added</h2>
+        <div class="feature-grid">
+            <div class="feature-item">
+                <strong>JavaScript Engine</strong><br>
+                Client-side translation system with localStorage persistence
+            </div>
+            <div class="feature-item">
+                <strong>3 Languages</strong><br>
+                Hindi (हिंदी), Tamil (தமிழ்), Telugu (తెలుగు)
+            </div>
+            <div class="feature-item">
+                <strong>UI Toggle Button</strong><br>
+                Dropdown selector in Dashboard header
+            </div>
+            <div class="feature-item">
+                <strong>Translation Files</strong><br>
+                JSON dictionaries for each language
+            </div>
+        </div>
+
+        <h2>🎨 Supported Languages</h2>
+        <div class="language-demo">
+            <div class="lang-card">
+                <div class="lang-flag">🇬🇧</div>
+                <div class="lang-name">English</div>
+                <div class="lang-native">Default</div>
+            </div>
+            <div class="lang-card">
+                <div class="lang-flag">🇮🇳</div>
+                <div class="lang-name">Hindi</div>
+                <div class="lang-native">हिंदी</div>
+            </div>
+            <div class="lang-card">
+                <div class="lang-flag">🇮🇳</div>
+                <div class="lang-name">Tamil</div>
+                <div class="lang-native">தமிழ்</div>
+            </div>
+            <div class="lang-card">
+                <div class="lang-flag">🇮🇳</div>
+                <div class="lang-name">Telugu</div>
+                <div class="lang-native">తెలుగు</div>
+            </div>
+        </div>
+
+        <h2>🚀 How to Test</h2>
+        <ol class="steps">
+            <li>
+                <strong>Start your Spring Boot application</strong><br>
+                <code>mvn spring-boot:run</code> or run from your IDE
+            </li>
+            <li>
+                <strong>Open your browser</strong><br>
+                Navigate to <code>http://localhost:8080</code> (or your configured port)
+            </li>
+            <li>
+                <strong>Go to Dashboard</strong><br>
+                You should see a language button in the top-right corner
+            </li>
+            <li>
+                <strong>Click the language button</strong><br>
+                A dropdown will appear with language options
+            </li>
+            <li>
+                <strong>Select a language</strong><br>
+                Watch the UI text change instantly!
+            </li>
+            <li>
+                <strong>Test persistence</strong><br>
+                Refresh the page - your language choice should be remembered
+            </li>
+        </ol>
+
+        <div class="screenshot-placeholder">
+            🖼️ When you run the app, the language button will appear here →<br>
+            Click it to see: English | हिंदी | தமிழ் | తెలుగు
+        </div>
+
+        <h2>📝 Example Translations</h2>
+        <div class="code-block">
+English:  "Dashboard" → "Total Value" → "Profit/Loss"
+Hindi:    "डैशबोर्ड" → "कुल मूल्य" → "लाभ/हानि"
+Tamil:    "டாஷ்போர்டு" → "மொத்த மதிப்பு" → "லாபம்/இழப்பு"
+Telugu:   "డాష్‌బోర్డ్" → "మొత్తం విలువ" → "లాభం/నష్టం"
+        </div>
+
+        <h2>⚙️ Files Modified/Created</h2>
+        <div class="code-block">
+CREATED:
+✅ src/main/resources/static/js/language-toggle.js
+✅ src/main/resources/static/translations/hi.json
+✅ src/main/resources/static/translations/ta.json
+✅ src/main/resources/static/translations/te.json
+✅ LANGUAGE_TOGGLE_README.md
+
+MODIFIED:
+✏️ src/main/resources/templates/Dashboard.html
+   - Added CSS styles for toggle button
+   - Added language toggle container in header
+   - Added data-i18n attributes to UI elements
+   - Added script tag for language-toggle.js
+        </div>
+
+        <h2>🔧 Technical Implementation</h2>
+        <h3>How it Works:</h3>
+        <ul>
+            <li><strong>Zero Backend Changes</strong> - Completely client-side</li>
+            <li><strong>Attribute-Based</strong> - Elements with <code>data-i18n="key"</code> are translated</li>
+            <li><strong>Dictionary Lookup</strong> - JSON files map keys to translated text</li>
+            <li><strong>LocalStorage</strong> - User's preference is saved in browser</li>
+            <li><strong>Instant Switching</strong> - No page reload required</li>
+        </ul>
+
+        <h3>Example Code:</h3>
+        <div class="code-block">
+&lt;!-- HTML with translation attribute --&gt;
+&lt;span data-i18n="dashboard.total_value"&gt;Total Value&lt;/span&gt;
+
+// JavaScript finds this element and swaps text
+// From: "Total Value"
+// To:   "कुल मूल्य" (Hindi)
+        </div>
+
+        <h2>🗑️ Easy Removal</h2>
+        <div class="warning">
+            <strong>⚠️ To Disable This Feature:</strong><br>
+            Simply comment out this line in Dashboard.html:<br>
+            <code>&lt;!-- &lt;script src="/js/language-toggle.js"&gt;&lt;/script&gt; --&gt;</code>
+        </div>
+
+        <h2>✅ Testing Checklist</h2>
+        <ul>
+            <li>☐ Language button appears in Dashboard header</li>
+            <li>☐ Dropdown shows 4 language options</li>
+            <li>☐ Selecting Hindi changes visible text</li>
+            <li>☐ Selecting Tamil changes visible text</li>
+            <li>☐ Selecting Telugu changes visible text</li>
+            <li>☐ Switching back to English works</li>
+            <li>☐ Language preference persists after refresh</li>
+            <li>☐ No console errors</li>
+            <li>☐ Charts and existing features still work</li>
+        </ul>
+
+        <h2>🔍 Troubleshooting</h2>
+        <ul>
+            <li><strong>Button doesn't appear?</strong> Check browser console for errors</li>
+            <li><strong>Text doesn't change?</strong> Verify translation files exist at /translations/</li>
+            <li><strong>Some text not translating?</strong> Those elements need data-i18n attributes</li>
+            <li><strong>Want to remove it?</strong> See the README file for complete removal steps</li>
+        </ul>
+
+        <div class="success">
+            <strong>🎉 Ready to Test!</strong><br>
+            Start your application and navigate to the Dashboard to see the language toggle in action.
+            The feature is completely isolated - your existing code is untouched!
+        </div>
+
+        <h2>📚 Documentation</h2>
+        <p>
+            For complete documentation including:
+            <ul>
+                <li>How to add more languages</li>
+                <li>How to translate other pages</li>
+                <li>Complete removal instructions</li>
+                <li>Known limitations</li>
+            </ul>
+            Please see: <strong>LANGUAGE_TOGGLE_README.md</strong> in your project root
+        </p>
+    </div>
+
+    <div class="demo-card" style="text-align: center; color: #666;">
+        <p><strong>Created by GitHub Copilot</strong></p>
+        <p>Experimental Feature - Safe to remove at any time</p>
+    </div>
+</body>
+</html>

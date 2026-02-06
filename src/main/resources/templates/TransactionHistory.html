@@ -284,6 +284,102 @@
             animation: glowRed 2s ease-in-out;
         }
 
+        0%,
+        100% {
+            color: var(--accent);
+        }
+
+        50% {
+            color: var(--red);
+            text-shadow: 0 0 8px var(--red);
+        }
+        }
+
+        .glow-green {
+            animation: glowGreen 2s ease-in-out;
+        }
+
+        .glow-red {
+            animation: glowRed 2s ease-in-out;
+        }
+
+        /* EXPERIMENTAL: Language Toggle Styles */
+        .language-selector {
+            position: relative;
+            display: inline-block;
+        }
+
+        .lang-toggle-btn {
+            background: var(--surface-elevated);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .lang-toggle-btn:hover {
+            background: var(--border);
+            border-color: var(--accent);
+        }
+
+        .language-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: var(--surface-elevated);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px;
+            min-width: 150px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 1000;
+        }
+
+        .language-dropdown.show {
+            display: block;
+        }
+
+        .lang-option {
+            background: transparent;
+            border: none;
+            color: var(--text);
+            padding: 10px 14px;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .lang-option:hover {
+            background: var(--surface);
+        }
+
+        .lang-option.active {
+            background: var(--accent);
+            color: var(--bg);
+            font-weight: 600;
+        }
+
+        .top-bar-with-lang {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+        }
+
+        .top-bar-with-lang h1 {
+            margin: 0;
+        }
+
         @media print {
             body {
                 background: white;
@@ -397,6 +493,17 @@
             </div>
             <div class="header-section">
                 <h1 class="page-title">Transaction History</h1>
+                <div class="language-selector">
+                    <button class="lang-toggle-btn" onclick="languageToggle.toggleDropdown()">
+                        <i class="fa fa-globe"></i> <span id="current-lang-label">English</span> <i
+                            class="fa fa-chevron-down"></i>
+                    </button>
+                    <div class="language-dropdown" id="lang-dropdown">
+                        <button class="lang-option" onclick="languageToggle.setLanguage('en')">English</button>
+                        <button class="lang-option" onclick="languageToggle.setLanguage('hi')">हिंदी (Hindi)</button>
+                        <button class="lang-option" onclick="languageToggle.setLanguage('ta')">தமிழ் (Tamil)</button>
+                    </div>
+                </div>
                 <button class="btn-generate" onclick="generatePDF()"><i class="fa fa-file-pdf"></i> Generate
                     Report</button>
             </div>
@@ -423,6 +530,46 @@
                 </table>
             </div>
         </div>
+    </div>
+    <div class="transaction-card">
+        <h2 class="section-title"><i class="fa fa-list"></i> <span data-i18n="transactions.transaction_history">All
+                Transactions</span></h2>
+        <table>
+            <thead>
+                <tr>
+                    <th data-i18n="transactions.transaction_id">Transaction ID</th>
+                    <th data-i18n="transactions.date">Date</th>
+                    <th data-i18n="transactions.type">Type</th>
+                    <th>Value</th>
+                    <th>Purse</th>
+                    <th data-i18n="transactions.status">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="t : ${transactions}">
+                    <td><span class="transaction-id" th:text="${t.id}">1</span></td>
+                    <td th:text="${t.date}">2023-01-01</td>
+                    <td>
+                        <span th:class="${t.type == 'BUY' ? 'type-buy' : 'type-sell'}"
+                            th:attr="data-i18n=${t.type == 'BUY' ? 'transactions.buy' : (t.type == 'SELL' ? 'transactions.sell' : (t.type == 'PURSE ADD' ? 'transactions.purse_add' : 'transactions.purse_deduct'))}"
+                            th:text="${t.type}">BUY</span>
+                    </td>
+                    <td th:text="'$' + ${t.transactionValue}">$0.00</td>
+                    <td th:text="'$' + ${t.purseValue}">$0.00</td>
+                    <td>
+                        <span th:class="${t.status ? 'status-success' : 'status-failed'}"
+                            th:attr="data-i18n=${t.status ? 'transactions.success' : 'transactions.failed'}"
+                            th:text="${t.status ? 'Success' : 'Failed'}">Status</span>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(transactions)}">
+                    <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">No transactions
+                        yet. Start trading to see your history here.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    </div>
     </div>
 
     <script>
@@ -555,6 +702,7 @@
 
         window.addEventListener('DOMContentLoaded', initPage);
     </script>
+    <script>const languageToggle = { currentLanguage: 'en', translations: { en: { "nav.dashboard": "Dashboard", "nav.performance": "Performance", "nav.market_lookup": "Market Lookup", "nav.transaction_history": "Transaction History" }, hi: { "nav.dashboard": "डैशबोर्ड", "nav.performance": "प्रदर्शन", "nav.market_lookup": "बाज़ार खोज", "nav.transaction_history": "लेनदेन इतिहास" }, ta: { "nav.dashboard": "டாஷ்போர்டு", "nav.performance": "செயல்திறன்", "nav.market_lookup": "சந்தை தேடல்", "nav.transaction_history": "பரிவர்த்தனை வரலாறு" } }, toggleDropdown: function () { const d = document.getElementById('lang-dropdown'); if (d) d.classList.toggle('show') }, setLanguage: function (lang) { this.currentLanguage = lang; this.applyLanguage(lang); const d = document.getElementById('lang-dropdown'); if (d) d.classList.remove('show'); const labels = { 'en': 'English', 'hi': 'हिंदी', 'ta': 'தமிழ்' }; const l = document.getElementById('current-lang-label'); if (l) l.innerText = labels[lang] }, applyLanguage: function (lang) { const t = this.translations[lang]; if (!t) return; document.querySelectorAll('[data-i18n]').forEach(el => { const key = el.getAttribute('data-i18n'); if (t[key]) { if (el.tagName === 'INPUT' && el.hasAttribute('placeholder')) el.placeholder = t[key]; else el.innerText = t[key] } }) }, init: function () { document.addEventListener('click', (e) => { if (!e.target.closest('.language-selector')) { const d = document.getElementById('lang-dropdown'); if (d) d.classList.remove('show') } }) } }; if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => languageToggle.init()); else languageToggle.init();</script>
 
 </body>
 
